@@ -1,0 +1,46 @@
+{
+    "name": "sammyjo20/package-template",
+    "description": "Description",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Sam Carré",
+            "email": "29132017+Sammyjo20@users.noreply.github.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/sammyjo20",
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.5",
+        "pestphp/pest": "^2.24",
+        "phpstan/phpstan": "^1.9",
+        "spatie/ray": "^1.33"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Sammyjo20\\Package\\": "src/",
+            "Sammyjo20\\Package\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "fix-code": [
+            "./vendor/bin/php-cs-fixer fix --allow-risky=yes"
+        ],
+        "pstan": [
+            "./vendor/bin/phpstan analyse"
+        ],
+        "test": [
+            "./vendor/bin/pest"
+        ]
+    }
+}
