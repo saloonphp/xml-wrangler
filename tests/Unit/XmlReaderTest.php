@@ -29,14 +29,9 @@ test('you can parse xml', function () {
     // $reader->elements(); Just elements (no searching)
     // $reader->values(); Just values (no searching)
 
-    $valuations = $reader->value('ce:valuation');
+    dd($reader->element());
 
-    dd($valuations);
+    $client = $reader->value('ce:personal_client');
 
-    $values = $reader->value('ce:m_content.ce:contract');
-
-    $fundName = $reader->value('ce:fund_name');
-    $numberOfUnits = $reader->value('ce:number_of_units');
-
-    dd($values, $fundName, $numberOfUnits);
+    dd($client);
 });

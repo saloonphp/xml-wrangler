@@ -75,26 +75,9 @@ class XmlReader
             return $results[0][$name];
         }
 
-        return array_map(function (array $result) use ($name) {
+        return array_map(static function (array $result) use ($name) {
             return $result[$name];
         }, $results);
-    }
-
-    /**
-     * Get multiple elements
-     *
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function elements(array $names, bool $nullable = false): array
-    {
-        $values = [];
-
-        foreach ($names as $name) {
-            $values[$name] = $this->element($name, $nullable);
-        }
-
-        return $values;
     }
 
     /**
@@ -129,23 +112,6 @@ class XmlReader
             $value = $element->getContent();
 
             $values[$key] = is_array($value) ? $this->convertElementArrayIntoValues($value) : $value;
-        }
-
-        return $values;
-    }
-
-    /**
-     * Find multiple values
-     *
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function values(array $names, bool $nullable = false): array
-    {
-        $values = [];
-
-        foreach ($names as $name) {
-            $values[$name] = $this->value($name, $nullable);
         }
 
         return $values;
