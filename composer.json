@@ -1,6 +1,6 @@
 {
-    "name": "sammyjo20/package-template",
-    "description": "Description",
+    "name": "saloonphp/xml-wrangler",
+    "description": "Easily Read & Write XML in PHP",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -10,9 +10,11 @@
             "role": "Developer"
         }
     ],
-    "homepage": "https://github.com/sammyjo20",
+    "homepage": "https://github.com/saloonphp/xml-wrangler",
     "require": {
-        "php": "^8.1"
+        "php": "^8.1",
+        "veewee/xml": "^2.7",
+        "spatie/array-to-xml": "^3.2"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.5",
@@ -23,8 +25,8 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "Sammyjo20\\Package\\": "src/",
-            "Sammyjo20\\Package\\Tests\\": "tests/"
+            "Saloon\\XmlWrangler\\": "src/",
+            "Saloon\\XmlWrangler\\Tests\\": "tests/"
         }
     },
     "config": {
