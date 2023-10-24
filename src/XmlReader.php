@@ -36,7 +36,7 @@ class XmlReader
     /**
      * Find an element from the XML
      *
-     * @throws \Saloon\SoapPlugin\Exceptions\XmlReaderException
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function element(string $name, bool $nullable = false, string $buffer = null): Element|array|null
@@ -83,7 +83,8 @@ class XmlReader
     /**
      * Get multiple elements
      *
-     * @throws \Saloon\SoapPlugin\Exceptions\XmlReaderException|\VeeWee\Xml\Encoding\Exception\EncodingException
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function elements(array $names, bool $nullable = false): array
     {
@@ -99,7 +100,8 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
-     * @throws \Saloon\SoapPlugin\Exceptions\XmlReaderException|\VeeWee\Xml\Encoding\Exception\EncodingException
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function value(string $name, bool $nullable = false): mixed
     {
@@ -135,7 +137,8 @@ class XmlReader
     /**
      * Find multiple values
      *
-     * @throws \Saloon\SoapPlugin\Exceptions\XmlReaderException|\VeeWee\Xml\Encoding\Exception\EncodingException
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function values(array $names, bool $nullable = false): array
     {
@@ -202,7 +205,6 @@ class XmlReader
     /**
      * Get all elements
      *
-     * @return array
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function all(): array
@@ -219,7 +221,7 @@ class XmlReader
     /**
      * Convert the XML into an array
      *
-     * @return array
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     public function toArray(): array
     {

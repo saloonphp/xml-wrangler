@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler\Data;
 
-use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Traits\HasContent;
 use Saloon\XmlWrangler\Traits\HasAttributes;
 
@@ -32,27 +31,5 @@ class Element
     public static function make(mixed $content = null, array $attributes = [], array $namespaces = []): static
     {
         return new static($content, $attributes, $namespaces);
-    }
-
-    /**
-     * Convert the element into an array
-     *
-     * Todo: Test this
-     */
-    public function toArray(): array
-    {
-        return XmlWriter::convertElementIntoArray($this);
-    }
-
-    // Todo: Reconsider name
-    public function flatten(): string|array
-    {
-        $content = $this->content;
-
-        if (! is_array($content)) {
-            return $content;
-        }
-
-        dd($content);
     }
 }
