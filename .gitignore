@@ -18,3 +18,6 @@ tests/Fixtures/Saloon
 
 # environments/configs
 phpstan.neon
+
+# Testing Files
+tests/Fixtures/ExampleFiles
