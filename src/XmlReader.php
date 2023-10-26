@@ -28,9 +28,25 @@ class XmlReader
     /**
      * Create the XML reader
      */
-    public static function make(string $xml): static
+    public static function fromString(string $xml): static
     {
         return new static($xml);
+    }
+
+    /**
+     * Get all elements
+     *
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function elements(): array
+    {
+        $reader = Reader::fromXmlString($this->xml);
+
+        $search = $reader->provide(Matcher\all());
+
+        $results = iterator_to_array($search);
+
+        return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
     }
 
     /**
@@ -78,6 +94,16 @@ class XmlReader
         return array_map(static function (array $result) use ($name) {
             return $result[$name];
         }, $results);
+    }
+
+    /**
+     * Convert the XML into an array
+     *
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function values(): array
+    {
+        return $this->convertElementArrayIntoValues($this->elements());
     }
 
     /**
@@ -166,31 +192,5 @@ class XmlReader
         }
 
         return [$key => $element];
-    }
-
-    /**
-     * Get all elements
-     *
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function all(): array
-    {
-        $reader = Reader::fromXmlString($this->xml);
-
-        $search = $reader->provide(Matcher\all());
-
-        $results = iterator_to_array($search);
-
-        return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
-    }
-
-    /**
-     * Convert the XML into an array
-     *
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function toArray(): array
-    {
-        return $this->convertElementArrayIntoValues($this->all());
     }
 }

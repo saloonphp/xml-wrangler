@@ -1,0 +1,225 @@
+<?php
+
+declare(strict_types=1);
+
+use Saloon\XmlWrangler\Data\Element;
+use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use Saloon\XmlWrangler\XmlReader;
+
+test('can parse xml and convert it into an array of elements', function () {
+    $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $belgianWaffles = new Element([
+        'name' => Element::make('Belgian Waffles'),
+        'price' => Element::make('$5.95'),
+        'description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+        'calories' => Element::make('650'),
+    ]);
+
+    $strawberryBelgianWaffles = new Element([
+        'name' => Element::make('Strawberry Belgian Waffles'),
+        'price' => Element::make('$7.95'),
+        'description' => Element::make('Light Belgian waffles covered with strawberries and whipped cream'),
+        'calories' => Element::make('900'),
+    ]);
+
+    $berryberryBelgianWaffles = new Element([
+        'name' => Element::make('Berry-Berry Belgian Waffles'),
+        'price' => Element::make('$8.95'),
+        'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+        'calories' => Element::make('900'),
+    ]);
+
+    $frenchToast = new Element([
+        'name' => Element::make('French Toast'),
+        'price' => Element::make('$4.50'),
+        'description' => Element::make('Thick slices made from our homemade sourdough bread'),
+        'calories' => Element::make('600'),
+    ]);
+
+    $homestyleBreakfast = new Element([
+        'name' => Element::make('Homestyle Breakfast'),
+        'price' => Element::make('$6.95'),
+        'description' => Element::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
+        'calories' => Element::make('950'),
+    ]);
+
+    expect($reader->elements())->toEqual([
+        'breakfast_menu' => Element::make([
+            'food' => new Element([
+                $belgianWaffles,
+                $strawberryBelgianWaffles,
+                $berryberryBelgianWaffles,
+                $frenchToast,
+                $homestyleBreakfast,
+            ])
+        ])->addAttribute('name', 'Big G\'s Breakfasts')
+    ]);
+});
+
+test('can parse xml and convert it into an array of values', function () {
+    $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    expect($reader->values())->toEqual([
+        'breakfast_menu' => [
+            'food' => [
+                [
+                    'name' => 'Belgian Waffles',
+                    'price' => '$5.95',
+                    'description' => 'Two of our famous Belgian Waffles with plenty of real maple syrup',
+                    'calories' => '650',
+                ],
+                [
+                    'name' => 'Strawberry Belgian Waffles',
+                    'price' => '$7.95',
+                    'description' => 'Light Belgian waffles covered with strawberries and whipped cream',
+                    'calories' => '900',
+                ],
+                [
+                    'name' => 'Berry-Berry Belgian Waffles',
+                    'price' => '$8.95',
+                    'description' => 'Light Belgian waffles covered with an assortment of fresh berries and whipped cream',
+                    'calories' => '900',
+                ],
+                [
+                    'name' => 'French Toast',
+                    'price' => '$4.50',
+                    'description' => 'Thick slices made from our homemade sourdough bread',
+                    'calories' => '600',
+                ],
+                [
+                    'name' => 'Homestyle Breakfast',
+                    'price' => '$6.95',
+                    'description' => 'Two eggs, bacon or sausage, toast, and our ever-popular hash browns',
+                    'calories' => '950',
+                ]
+            ]
+        ]
+    ]);
+});
+
+test('can parse xml and search for a specific element', function () {
+    $file = file_get_contents('tests/Fixtures/customers.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $element = $reader->element('customer');
+
+    expect($element)->toBeInstanceOf(Element::class);
+    expect($element->getAttributes())->toEqual(['id' => '55000']);
+    expect($element->getContent())->toBeArray();
+    expect($element->getContent())->toHaveCount(2);
+});
+
+test('can parse xml and search for a specific value', function () {
+    $file = file_get_contents('tests/Fixtures/customers.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $value = $reader->value('customer');
+
+    expect($value)->toBeArray();
+    expect($value)->toHaveCount(2);
+    expect($value)->toHaveKeys(['name', 'address']);
+});
+
+test('it throws an exception if an element could not be found', function () {
+    $file = file_get_contents('tests/Fixtures/customers.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    expect($reader->element('person', true))->toBeNull();
+
+    $this->expectException(XmlReaderException::class);
+    $this->expectExceptionMessage('Unable to find [person] element');
+
+    $reader->element('person');
+});
+
+test('it throws an exception if a value could not be found', function () {
+    $file = file_get_contents('tests/Fixtures/customers.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    expect($reader->value('person', true))->toBeNull();
+
+    $this->expectException(XmlReaderException::class);
+    $this->expectExceptionMessage('Unable to find [person] element');
+
+    $reader->value('person');
+});
+
+test('can use dot notation to find a specific nested element', function () {
+    $file = file_get_contents('tests/Fixtures/customers.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $value = $reader->value('customers.customer.name');
+
+    expect($value)->toBe('Charter Group');
+});
+
+test('when the elements have multiple an array is returned', function () {
+    $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $food = $reader->value('breakfast_menu.food');
+
+    expect($food)->toBeArray();
+    expect($food)->toHaveCount(5);
+    expect($food)->toEqual([
+        [
+            'name' => 'Belgian Waffles',
+            'price' => '$5.95',
+            'description' => 'Two of our famous Belgian Waffles with plenty of real maple syrup',
+            'calories' => '650',
+        ],
+        [
+            'name' => 'Strawberry Belgian Waffles',
+            'price' => '$7.95',
+            'description' => 'Light Belgian waffles covered with strawberries and whipped cream',
+            'calories' => '900',
+        ],
+        [
+            'name' => 'Berry-Berry Belgian Waffles',
+            'price' => '$8.95',
+            'description' => 'Light Belgian waffles covered with an assortment of fresh berries and whipped cream',
+            'calories' => '900',
+        ],
+        [
+            'name' => 'French Toast',
+            'price' => '$4.50',
+            'description' => 'Thick slices made from our homemade sourdough bread',
+            'calories' => '600',
+        ],
+        [
+            'name' => 'Homestyle Breakfast',
+            'price' => '$6.95',
+            'description' => 'Two eggs, bacon or sausage, toast, and our ever-popular hash browns',
+            'calories' => '950',
+        ]
+    ]);
+});
+
+test('can use numbers to find a specific index of a nested element with dot notation', function () {
+    $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
+
+    $reader = XmlReader::fromString($file);
+
+    $berryBerryBelgianWaffles = $reader->value('breakfast_menu.food.2');
+
+    dd($berryBerryBelgianWaffles);
+});
+
+test('can parse xml from a file', function () {
+    //
+});
+
+test('can parse xml from a stream', function () {
+    // Todo: Throw an exception if it cant be rewound
+});
