@@ -70,12 +70,4 @@ class RootElement
 
         return $this;
     }
-
-    /**
-     * Convert the root element into an element
-     */
-    public function toElement(): Element
-    {
-        return new Element($this->getContent(), $this->getAttributes());
-    }
 }

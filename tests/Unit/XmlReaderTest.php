@@ -29,9 +29,9 @@ test('you can parse xml', function () {
     // $reader->elements(); Just elements (no searching)
     // $reader->values(); Just values (no searching)
 
-    dd($reader->element());
+    dd($reader->value('ds:X509SubjectName'));
 
     $client = $reader->value('ce:personal_client');
 
     dd($client);
-});
+})->todo();
