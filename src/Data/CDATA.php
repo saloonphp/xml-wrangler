@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler\Data;
 
-use Saloon\XmlWrangler\Traits\HasContent;
-use Saloon\XmlWrangler\Traits\HasAttributes;
-
 class CDATA
 {
     /**
      * Content
-     *
-     * @var string|null
      */
     protected ?string $content = null;
 

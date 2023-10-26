@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\XmlWriter;
+use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\Data\Element;
 
 test('a minimal element can be converted into a XML array', function () {

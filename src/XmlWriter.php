@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
-use Saloon\XmlWrangler\Data\CDATA;
 use Spatie\ArrayToXml\ArrayToXml;
+use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
 use Saloon\XmlWrangler\Exceptions\XmlWriterException;

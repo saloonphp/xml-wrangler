@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Saloon\XmlWrangler\Data\RootElement;
 
 test('you can set the name of the root element', function () {
