@@ -4,22 +4,13 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
+use Saloon\XmlWrangler\Exceptions\XmlWriterException;
 use Spatie\ArrayToXml\ArrayToXml;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
 
 class XmlWriter
 {
-    /**
-     * Root element of the XML builder
-     */
-    protected RootElement $rootElement;
-
-    /**
-     * Content of the XML
-     */
-    protected array $content = [];
-
     /**
      * XML Encoding
      */
@@ -33,10 +24,8 @@ class XmlWriter
     /**
      * Constructor
      */
-    public function __construct(RootElement $rootElement = null, array $content = [], string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0')
+    public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0')
     {
-        $this->rootElement = $rootElement ?? new RootElement('root');
-        $this->content = $content;
         $this->xmlEncoding = $xmlEncoding;
         $this->xmlVersion = $xmlVersion;
     }
@@ -44,36 +33,67 @@ class XmlWriter
     /**
      * Build the XML body
      *
+     * @param array $content
+     * @param bool $minified
+     * @return string
      * @throws \DOMException
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlWriterException
      */
-    public function write(array $additionalContent = [], bool $minify = false): string
+    public function write(array $content, bool $minified = false): string
     {
-        $rootElement = $this->rootElement;
-        $baseRootElement = $rootElement->toElement();
+        if (empty($content)) {
+            throw new XmlWriterException('You must specify at least one element in the XML.');
+        }
 
-        // We have to convert the root element content because there's a chance that it
-        // could be just a string, so we need to convert this.
+        if (count($content) > 1) {
+            throw new XmlWriterException('You must only have one root element.');
+        }
 
-        $rootElementContent = static::buildElementContent($baseRootElement);
+        $rootElementName = array_key_first($content);
 
-        $rootElementArray = [
-            'rootElementName' => $rootElement->getName(),
-            ...static::buildElementAttributes($baseRootElement),
+        if (! is_string($rootElementName)) {
+            throw new XmlWriterException('The root element key must be a string.');
+        }
+
+        $rootElement = [
+            'rootElementName' => $rootElementName,
         ];
 
-        // Building the root element
+        $rootElementContent = $content[$rootElementName];
 
-        // Merge each of the different content types together
+        // When the root element content is an element we should check for
+        // any attributes that might be on the element.
 
-        $content = array_merge($rootElementContent, $this->content, $additionalContent);
+        if ($rootElementContent instanceof Element) {
+            $attributes = $rootElementContent->getAttributes();
 
-        // Now we'll convert the content into an array that our engine will accept
+            if (! empty($attributes)) {
+                $rootElement['_attributes'] = $attributes;
+            }
 
-        $content = static::convertXmlContentIntoArray($content);
+            // Now we'll get the content of the XML body.
 
-        $engine = new ArrayToXml($content, $rootElementArray, xmlEncoding: $this->xmlEncoding, xmlVersion: $this->xmlVersion);
+            $content = $rootElementContent->getContent();
+        } else {
+            $content = $content[$rootElementName];
+        }
 
-        if ($minify === false) {
+        // When the content is not an array, we'll convert the scalar value
+        // into an array with _value which will insert the value in the
+        // node as text.
+
+        if (isset($content) && ! is_array($content)) {
+            $content = ['_value' => $content];
+        }
+
+        // Now we will convert the XML content into an array which will recursively
+        // convert all the elements into their correct format.
+
+        $content = static::convertXmlContentIntoArray($content ?? []);
+
+        $engine = new ArrayToXml($content, $rootElement, xmlEncoding: $this->xmlEncoding, xmlVersion: $this->xmlVersion);
+
+        if ($minified === false) {
             $engine->prettify();
         }
 
