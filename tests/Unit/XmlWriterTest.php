@@ -10,7 +10,7 @@ test('a minimal element can be converted into a XML array', function () {
 
     $data = ['Person' => new Element];
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -26,7 +26,7 @@ test('you can provide scalar content', function (mixed $value, string $expected)
 
     $writer = new XmlWriter;
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -59,7 +59,7 @@ test('you can provide array content with mixed values', function () {
 
     $writer = new XmlWriter;
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -93,7 +93,7 @@ test('you can provide just namespaces', function () {
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -114,7 +114,7 @@ test('you can provide attributes', function () {
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -140,7 +140,7 @@ test('you can provide namespaces and attributes', function () {
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -167,7 +167,7 @@ test('attributes with a scalar value', function () {
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data))->toBe(
+    expect($writer->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
@@ -205,7 +205,7 @@ test('maximal element test', function () {
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data, true))->toBe(
+    expect($writer->write('root', $data, true))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root><Saloon xmlns="https://docs.saloon.dev" background-color="#09f" xmlns:ns1="https://google.com" xmlns:ns2="https://github.com"><yee>haw</yee><nested><foo>bar</foo></nested><another><abc><def>xyz</def><super>nested</super></abc></another></Saloon></root>
@@ -231,11 +231,11 @@ test('when an element has an array of items they can be merged together', functi
     $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write($data, true))->toBe(
-        <<<XML
-        <?xml version="1.0" encoding="utf-8"?>
-        <root><Saloon><Header><a/><b><Again><c>howdy</c><d/></Again></b><many-values>1</many-values><many-values>2</many-values><many-values>3</many-values><many-values>4</many-values><many-values>5</many-values></Header></Saloon></root>
+    expect($writer->write('root', $data, true))->toBe(
+<<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<root><Saloon><Header><a/><b><Again><c>howdy</c><d/></Again></b><many-values>1</many-values><many-values>2</many-values><many-values>3</many-values><many-values>4</many-values><many-values>5</many-values></Header></Saloon></root>
 
-        XML
+XML
     );
 });

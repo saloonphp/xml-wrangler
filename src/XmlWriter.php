@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
-use Saloon\XmlWrangler\Exceptions\XmlWriterException;
 use Spatie\ArrayToXml\ArrayToXml;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
+use Saloon\XmlWrangler\Exceptions\XmlWriterException;
 
 class XmlWriter
 {
@@ -22,6 +22,11 @@ class XmlWriter
     protected string $xmlVersion;
 
     /**
+     * Additional processing instructions
+     */
+    protected array $processingInstructions = [];
+
+    /**
      * Constructor
      */
     public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0')
@@ -33,65 +38,52 @@ class XmlWriter
     /**
      * Build the XML body
      *
-     * @param array $content
-     * @param bool $minified
-     * @return string
      * @throws \DOMException
      * @throws \Saloon\XmlWrangler\Exceptions\XmlWriterException
      */
-    public function write(array $content, bool $minified = false): string
+    public function write(string|RootElement $rootElement, array $content, bool $minified = false): string
     {
-        if (empty($content)) {
-            throw new XmlWriterException('You must specify at least one element in the XML.');
+        if (! $this->isTopLevelContentValid($content)) {
+            throw new XmlWriterException('The top-most level of content must not have numeric keys.');
         }
 
-        if (count($content) > 1) {
-            throw new XmlWriterException('You must only have one root element.');
-        }
+        $rootElementName = $rootElement instanceof RootElement ? $rootElement->getName() : $rootElement;
 
-        $rootElementName = array_key_first($content);
-
-        if (! is_string($rootElementName)) {
-            throw new XmlWriterException('The root element key must be a string.');
-        }
-
-        $rootElement = [
+        $rootElementBuilder = [
             'rootElementName' => $rootElementName,
         ];
 
-        $rootElementContent = $content[$rootElementName];
+        $rootElementContent = [];
 
         // When the root element content is an element we should check for
         // any attributes that might be on the element.
 
-        if ($rootElementContent instanceof Element) {
-            $attributes = $rootElementContent->getAttributes();
+        if ($rootElement instanceof RootElement) {
+            $rootElementBuilder = array_merge($rootElementBuilder, $this->buildElementAttributes($rootElement));
 
-            if (! empty($attributes)) {
-                $rootElement['_attributes'] = $attributes;
+            $rootElementContent = $rootElement->getContent() ?? [];
+
+            if (is_scalar($rootElementContent)) {
+                $rootElementContent = ['_value' => $rootElementContent];
             }
-
-            // Now we'll get the content of the XML body.
-
-            $content = $rootElementContent->getContent();
-        } else {
-            $content = $content[$rootElementName];
-        }
-
-        // When the content is not an array, we'll convert the scalar value
-        // into an array with _value which will insert the value in the
-        // node as text.
-
-        if (isset($content) && ! is_array($content)) {
-            $content = ['_value' => $content];
         }
 
         // Now we will convert the XML content into an array which will recursively
         // convert all the elements into their correct format.
 
-        $content = static::convertXmlContentIntoArray($content ?? []);
+        $content = $this->convertXmlContentIntoArray(
+            array_merge($rootElementContent, $content)
+        );
 
-        $engine = new ArrayToXml($content, $rootElement, xmlEncoding: $this->xmlEncoding, xmlVersion: $this->xmlVersion);
+        $engine = new ArrayToXml($content, $rootElementBuilder, xmlEncoding: $this->xmlEncoding, xmlVersion: $this->xmlVersion);
+
+        // Processing instructions
+
+        foreach ($this->processingInstructions as $target => $instruction) {
+            $engine->addProcessingInstruction($target, $instruction);
+        }
+
+        // Minification
 
         if ($minified === false) {
             $engine->prettify();
@@ -101,17 +93,31 @@ class XmlWriter
     }
 
     /**
+     * Validate top level content
+     */
+    protected function isTopLevelContentValid(array $content): bool
+    {
+        foreach ($content as $key => $unused) {
+            if (is_numeric($key)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Convert an element into an array
      */
-    public static function convertElementIntoArray(Element $element): array
+    public function convertElementIntoArray(Element $element): array
     {
-        return array_merge(static::buildElementAttributes($element), static::buildElementContent($element));
+        return array_merge($this->buildElementAttributes($element), $this->buildElementContent($element));
     }
 
     /**
      * Build element attributes
      */
-    protected static function buildElementAttributes(Element $element): array
+    protected function buildElementAttributes(Element|RootElement $element): array
     {
         $attributes = $element->getAttributes();
 
@@ -128,7 +134,7 @@ class XmlWriter
     /**
      * Build element content
      */
-    protected static function buildElementContent(Element $element): array
+    protected function buildElementContent(Element $element): array
     {
         $output = [];
 
@@ -148,7 +154,7 @@ class XmlWriter
         if (is_array($content)) {
             // We'll walk through the array recursively and build up the element's data
 
-            $content = static::convertXmlContentIntoArray($content);
+            $content = $this->convertXmlContentIntoArray($content);
 
             $output = array_merge($output, $content);
         }
@@ -159,35 +165,29 @@ class XmlWriter
     /**
      * Convert XML content into array
      */
-    protected static function convertXmlContentIntoArray(array $content = []): array
+    protected function convertXmlContentIntoArray(array $content = []): array
     {
         $arrayContent = [];
 
         foreach ($content as $key => $value) {
             if ($value instanceof Element) {
-                $value = static::convertElementIntoArray($value);
+                $value = $this->convertElementIntoArray($value);
             }
 
             if (is_array($value)) {
-                $value = static::convertXmlContentIntoArray($value);
+                $value = $this->convertXmlContentIntoArray($value);
+            }
+
+            if (is_callable($value)) {
+                $value = function () use ($value) {
+                    return $this->convertElementIntoArray(new Element($value()));
+                };
             }
 
             $arrayContent[$key] = $value;
         }
 
         return $arrayContent;
-    }
-
-    /**
-     * Set the root element
-     *
-     * @return $this
-     */
-    public function setRootElement(RootElement $rootElement): static
-    {
-        $this->rootElement = $rootElement;
-
-        return $this;
     }
 
     /**
@@ -206,6 +206,18 @@ class XmlWriter
     public function setXmlVersion(string $xmlVersion): XmlWriter
     {
         $this->xmlVersion = $xmlVersion;
+
+        return $this;
+    }
+
+    /**
+     * Add processing instruction to the XML
+     *
+     * @return $this
+     */
+    public function addProcessingInstruction(string $target, string $data): static
+    {
+        $this->processingInstructions[$target] = $data;
 
         return $this;
     }
