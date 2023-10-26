@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
+use Saloon\XmlWrangler\Data\CDATA;
 use Spatie\ArrayToXml\ArrayToXml;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
@@ -43,29 +44,26 @@ class XmlWriter
      */
     public function write(string|RootElement $rootElement, array $content, bool $minified = false): string
     {
+        if (is_string($rootElement)) {
+            $rootElement = new RootElement($rootElement);
+        }
+
         if (! $this->isTopLevelContentValid($content)) {
             throw new XmlWriterException('The top-most level of content must not have numeric keys.');
         }
 
-        $rootElementName = $rootElement instanceof RootElement ? $rootElement->getName() : $rootElement;
-
         $rootElementBuilder = [
-            'rootElementName' => $rootElementName,
+            'rootElementName' => $rootElement->getName(),
         ];
 
-        $rootElementContent = [];
+        // We should check for any attributes that might be on the element.
 
-        // When the root element content is an element we should check for
-        // any attributes that might be on the element.
+        $rootElementBuilder = array_merge($rootElementBuilder, $this->buildElementAttributes($rootElement));
 
-        if ($rootElement instanceof RootElement) {
-            $rootElementBuilder = array_merge($rootElementBuilder, $this->buildElementAttributes($rootElement));
+        $rootElementContent = $rootElement->getContent() ?? [];
 
-            $rootElementContent = $rootElement->getContent() ?? [];
-
-            if (is_scalar($rootElementContent)) {
-                $rootElementContent = ['_value' => $rootElementContent];
-            }
+        if (is_scalar($rootElementContent)) {
+            $rootElementContent = ['_value' => $rootElementContent];
         }
 
         // Now we will convert the XML content into an array which will recursively
@@ -172,6 +170,10 @@ class XmlWriter
         foreach ($content as $key => $value) {
             if ($value instanceof Element) {
                 $value = $this->convertElementIntoArray($value);
+            }
+
+            if ($value instanceof CDATA) {
+                $value = ['_cdata' => $value->getContent()];
             }
 
             if (is_array($value)) {

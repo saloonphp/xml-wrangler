@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 
@@ -98,6 +99,23 @@ test('you can provide just namespaces', function () {
 <?xml version="1.0" encoding="utf-8"?>
 <root>
   <Saloon xmlns="https://docs.saloon.dev" xmlns:ns1="https://google.com" xmlns:ns2="https://github.com"/>
+</root>
+
+XML
+    );
+});
+
+test('can set the root namespace', function () {
+    $element = Element::make()->setRootNamespace('https://docs.saloon.dev');
+
+    $writer = new XmlWriter;
+    $data = ['Saloon' => $element];
+
+    expect($writer->write('root', $data))->toBe(
+        <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <Saloon xmlns="https://docs.saloon.dev"/>
 </root>
 
 XML
@@ -232,9 +250,29 @@ test('when an element has an array of items they can be merged together', functi
     $data = ['Saloon' => $element];
 
     expect($writer->write('root', $data, true))->toBe(
-<<<XML
+        <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root><Saloon><Header><a/><b><Again><c>howdy</c><d/></Again></b><many-values>1</many-values><many-values>2</many-values><many-values>3</many-values><many-values>4</many-values><many-values>5</many-values></Header></Saloon></root>
+
+XML
+    );
+});
+
+test('the writer can accept character data', function () {
+    $writer = new XmlWriter;
+
+    $xml = $writer->write('root', [
+        'foo' => CDATA::make('abc'),
+        'bar' => 'hello',
+    ]);
+
+    expect($xml)->toBe(
+        <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <foo><![CDATA[abc]]></foo>
+  <bar>hello</bar>
+</root>
 
 XML
     );

@@ -40,6 +40,10 @@ XML
     );
 });
 
+test('can customize the xml declaration', function () {
+    //
+});
+
 test('xml can be minified', function () {
     $writer = new XmlWriter;
 
