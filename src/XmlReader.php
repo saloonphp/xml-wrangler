@@ -122,6 +122,93 @@ class XmlReader
 
             $reader = ! empty($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
 
+            $searchTerm = $names[0];
+
+            array_shift($names);
+
+            ray($searchTerm, $buffer);
+
+            $search = $reader->provide(
+                Matcher\all(
+                    Matcher\node_name($searchTerm),
+                ),
+            );
+
+            $results = [];
+
+            $nextSearchElement = $names[0] ?? null;
+
+            foreach ($search as $key => $element) {
+                if (is_null($nextSearchElement)) {
+                    $results[] = $element;
+                    continue;
+                }
+
+                // When the next search element is numeric we need to check if the key
+                // of the results matches the next search element - if it does, we
+                // can add it to our elements array and continue.
+
+                if (is_numeric($nextSearchElement)) {
+                    if ((int)$nextSearchElement !== $key) {
+                        continue;
+                    }
+
+                    $results[] = $element;
+                    array_shift($names);
+
+                    if (empty($names)) {
+                        $name = strtok($name, '.');
+                    }
+
+                    break;
+                }
+
+                $results[] = $element;
+            }
+
+            if (empty($results)) {
+                return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
+            }
+
+            if (count($names) > 0) {
+                return $this->element(implode('.', $names), $withAttributes, $nullable, implode(PHP_EOL, $results));
+            }
+
+            // Now we'll want to loop over each element in the results array
+            // and convert the string XML into elements.
+
+            $results = array_map(fn (string $result) => $this->parseXml($result), $results);
+
+            if (count($results) === 1) {
+                return $results[0][$name];
+            }
+
+            return array_map(static function (array $result) use ($name) {
+                return $result[$name];
+            }, $results);
+
+        } catch (Exception $exception) {
+            $this->__destruct();
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Find an element from the XML
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function elementOld(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
+    {
+        try {
+            $names = explode('.', $name);
+
+            // Instantiate the reader and search for our first name.
+
+            $reader = ! empty($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
+
             $search = $reader->provide(
                 Matcher\all(
                     Matcher\node_name($names[0])

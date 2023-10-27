@@ -219,7 +219,9 @@ test('when the elements have multiple an array is returned', function () {
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $berryBerryBelgianWaffles = $reader->value('food.2');
+    $berryBerryBelgianWaffles = $reader->value('food.calories');
+
+    dd($berryBerryBelgianWaffles);
 
     expect($berryBerryBelgianWaffles)->toEqual([
         'name' => 'Berry-Berry Belgian Waffles',
@@ -248,8 +250,6 @@ test('can search for a nested element with specific attributes', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
     $soldOut = $reader->element('food', ['soldOut' => true]);
-
-    dd($soldOut);
 
     $bestSellers = [];
 
@@ -292,7 +292,7 @@ test('can parse xml from a stream', function () {
 test('can use xpath to find an element', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
 
-    $food = $reader->xpath('breakfast_menu/book[3]');
+    // $food = $reader->xpath('breakfast_menu/book[3]');
 
-    dd($food);
+    // dd($food);
 });
