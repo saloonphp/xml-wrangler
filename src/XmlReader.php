@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
+use Exception;
+use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -13,24 +15,81 @@ use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 class XmlReader
 {
     /**
-     * XML
+     * XML Reader
+     *
+     * @var \VeeWee\Xml\Reader\Reader
      */
-    protected string $xml;
+    protected Reader $reader;
+
+    /**
+     * Temporary File For Stream
+     *
+     * @var resource
+     */
+    protected mixed $streamFile;
 
     /**
      * Constructor
      */
-    public function __construct(string $xml)
+    public function __construct(Reader $reader, mixed $streamFile = null)
     {
-        $this->xml = $xml;
+        if (isset($streamFile) && ! is_resource($streamFile)) {
+            throw new InvalidArgumentException('Parameter $streamFile provided must be a valid resource.');
+        }
+
+        $this->reader = $reader;
+        $this->streamFile = $streamFile;
     }
 
     /**
-     * Create the XML reader
+     * Create the XML reader for a string
      */
     public static function fromString(string $xml): static
     {
-        return new static($xml);
+        return new static(Reader::fromXmlString($xml));
+    }
+
+    /**
+     * Create the XML reader for a file
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public static function fromFile(string $xml): static
+    {
+        if (! file_exists($xml) || ! is_readable($xml)) {
+            throw new XmlReaderException(sprintf('Unable to read the [%s] file.', $xml));
+        }
+
+        return new static(Reader::fromXmlFile($xml));
+    }
+
+    /**
+     * Create the reader from a stream
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public static function fromStream(mixed $resource): static
+    {
+        if (! is_resource($resource)) {
+            throw new XmlReaderException('Resource provided must be a valid resource.');
+        }
+
+        $temporaryFile = tmpfile();
+
+        if ($temporaryFile === false) {
+            throw new XmlReaderException('Unable to create the temporary file.');
+        }
+
+        while (! feof($resource)) {
+            fwrite($temporaryFile, fread($resource, 1024));
+        }
+
+        rewind($temporaryFile);
+
+        return new static(
+            reader: Reader::fromXmlFile(stream_get_meta_data($temporaryFile)['uri']),
+            streamFile: $temporaryFile,
+        );
     }
 
     /**
@@ -40,9 +99,7 @@ class XmlReader
      */
     public function elements(): array
     {
-        $reader = Reader::fromXmlString($this->xml);
-
-        $search = $reader->provide(Matcher\all());
+        $search = $this->reader->provide(Matcher\all());
 
         $results = iterator_to_array($search);
 
@@ -55,45 +112,84 @@ class XmlReader
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function element(string $name, bool $nullable = false, string $buffer = null): Element|array|null
+    public function element(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
     {
-        $names = explode('.', $name);
+        try {
+            $names = explode('.', $name);
 
-        $reader = Reader::fromXmlString($buffer ?? $this->xml);
+            // Instantiate the reader and search for our first name.
 
-        $search = $reader->provide(
-            Matcher\all(
-                Matcher\node_name($names[0])
-            ),
-        );
+            $reader = ! empty($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
 
-        $results = iterator_to_array($search);
+            $search = $reader->provide(
+                Matcher\all(
+                    Matcher\node_name($names[0])
+                ),
+            );
 
-        if (empty($results)) {
-            return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
+            // Convert the results into an array - this will cause us to store the full array in memory.
+
+            $results = iterator_to_array($search);
+
+            if (empty($results)) {
+                return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
+            }
+
+            // When there are multiple search terms we'll run the find method again on the
+            // other search terms to search within an element.
+
+            if (count($names) > 1) {
+                array_shift($names);
+
+                // When the next search term is an array we need to change our logic a little bit.
+                // We need to create a new $results array with the result requested. If this
+                // doesn't exist we need to throw an exception like normal.
+
+                // If it does exist, then we need to shift the number off the array and continue
+                // looking. If there are more values we'll continue looking, otherwise we'll
+                // just return this value.
+
+                if (is_numeric($names[0])) {
+                    $results = [$results[$names[0]] ?? null];
+
+                    if (is_null($results[0])) {
+                        return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
+                    }
+
+                    array_shift($names);
+
+                    // When there are no more elements to search for we will overwrite the name of the outer
+                    // array so our logic  to find the result will work.
+
+                    if (empty($names)) {
+                        $name = strtok($name, '.');
+                    }
+                }
+
+                // We'll continue searching if there are additional names to look through.
+
+                if (! empty($names)) {
+                    return $this->element(implode('.', $names), $withAttributes, $nullable, implode('', $results));
+                }
+            }
+
+            // Now we'll want to loop over each element in the results array
+            // and convert the string XML into elements.
+
+            $results = array_map(fn (string $result) => $this->parseXml($result), $results);
+
+            if (count($results) === 1) {
+                return $results[0][$name];
+            }
+
+            return array_map(static function (array $result) use ($name) {
+                return $result[$name];
+            }, $results);
+        } catch (Exception $exception) {
+            $this->__destruct();
+
+            throw $exception;
         }
-
-        // When there are multiple search terms we'll run the find method
-        // again on the other search terms to search within an element
-
-        if (count($names) > 1) {
-            array_shift($names);
-
-            return $this->element(implode('.', $names), $nullable, implode('', $results));
-        }
-
-        // Now we'll want to loop over each element in the results array
-        // and convert the string XML into elements.
-
-        $results = array_map(fn (string $result) => $this->parseXml($result), $results);
-
-        if (count($results) === 1) {
-            return $results[0][$name];
-        }
-
-        return array_map(static function (array $result) use ($name) {
-            return $result[$name];
-        }, $results);
     }
 
     /**
@@ -112,9 +208,9 @@ class XmlReader
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function value(string $name, bool $nullable = false): mixed
+    public function value(string $name, array $withAttributes = [], bool $nullable = false): mixed
     {
-        $value = $this->element($name, $nullable);
+        $value = $this->element($name, $withAttributes, $nullable);
 
         if ($value instanceof Element) {
             $value = $value->getContent();
@@ -192,5 +288,18 @@ class XmlReader
         }
 
         return [$key => $element];
+    }
+
+    /**
+     * Handle destructing the reader
+     *
+     * Close the temporary file if it is present
+     */
+    public function __destruct()
+    {
+        if (isset($this->streamFile)) {
+            fclose($this->streamFile);
+            unset($this->streamFile);
+        }
     }
 }
