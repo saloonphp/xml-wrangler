@@ -6,6 +6,7 @@ namespace Saloon\XmlWrangler;
 
 use Exception;
 use InvalidArgumentException;
+use Symfony\Component\DomCrawler\Crawler;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -221,6 +222,15 @@ class XmlReader
         }
 
         return $this->convertElementArrayIntoValues($value);
+    }
+
+    public function xpath(string $query): mixed
+    {
+        $xml = iterator_to_array($this->reader->provide(Matcher\all()))[0];
+
+        $reader = new Crawler($xml);
+
+        dd($reader);
     }
 
     /**

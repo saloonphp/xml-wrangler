@@ -20,7 +20,8 @@
         "friendsofphp/php-cs-fixer": "^3.5",
         "pestphp/pest": "^2.24",
         "phpstan/phpstan": "^1.9",
-        "spatie/ray": "^1.33"
+        "spatie/ray": "^1.33",
+        "symfony/dom-crawler": "^6.3"
     },
     "minimum-stability": "stable",
     "autoload": {

@@ -288,3 +288,11 @@ test('can parse xml from a stream', function () {
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
+
+test('can use xpath to find an element', function () {
+    $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
+
+    $food = $reader->xpath('breakfast_menu/book[3]');
+
+    dd($food);
+});
