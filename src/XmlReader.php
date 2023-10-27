@@ -7,6 +7,7 @@ namespace Saloon\XmlWrangler;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
+use VeeWee\Xml\Reader\Node\NodeSequence;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -124,14 +125,13 @@ class XmlReader
 
             $searchTerm = $names[0];
 
+            ray($searchTerm)->red();
+            ray($buffer)->green();
+
             array_shift($names);
 
-            ray($searchTerm, $buffer);
-
             $search = $reader->provide(
-                Matcher\all(
-                    Matcher\node_name($searchTerm),
-                ),
+                Matcher\node_name($searchTerm),
             );
 
             $results = [];
@@ -153,40 +153,49 @@ class XmlReader
                         continue;
                     }
 
-                    $results[] = $element;
                     array_shift($names);
 
                     if (empty($names)) {
                         $name = strtok($name, '.');
+                        $results[] = $element;
+                    } else {
+                        // We'll now apply the next search element to another element method which will
+                        // recursively look through the nested XML only keeping one in memory at a
+                        // time.
+
+                        $results[] = $this->element(implode('.', $names), $withAttributes, $nullable, $element);
                     }
 
                     break;
                 }
 
-                $results[] = $element;
+                $results = array_merge($results, (array)$this->element(implode('.', $names), $withAttributes, $nullable, $element));
             }
 
             if (empty($results)) {
                 return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
             }
 
-            if (count($names) > 0) {
-                return $this->element(implode('.', $names), $withAttributes, $nullable, implode(PHP_EOL, $results));
-            }
-
             // Now we'll want to loop over each element in the results array
             // and convert the string XML into elements.
 
-            $results = array_map(fn (string $result) => $this->parseXml($result), $results);
+            $results = array_map(function (string|array|Element $result) {
+                return is_string($result) ? $this->parseXml($result) : $result;
+            }, $results);
+
+            ray($results);
 
             if (count($results) === 1) {
+                if ($results[0] instanceof Element) {
+                    return $results[0];
+                }
+
                 return $results[0][$name];
             }
 
-            return array_map(static function (array $result) use ($name) {
-                return $result[$name];
+            return array_map(static function (array|Element $result) use ($name) {
+                return is_array($result) ? $result[$name] : $result;
             }, $results);
-
         } catch (Exception $exception) {
             $this->__destruct();
 
@@ -398,5 +407,18 @@ class XmlReader
             fclose($this->streamFile);
             unset($this->streamFile);
         }
+    }
+
+    /**
+     * Create a numeric node matcher
+     *
+     * @param string $number
+     * @return callable
+     */
+    public function numericNodeMatcher(string $number): callable
+    {
+        return static function (NodeSequence $sequence) use ($number): bool {
+            return $sequence->current()->position() === (int)$number + 1;
+        };
     }
 }
