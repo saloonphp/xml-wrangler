@@ -40,6 +40,14 @@ class XmlWriter
     }
 
     /**
+     * Create an XML writer instance
+     */
+    public static function make(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0'): static
+    {
+        return new static($xmlEncoding, $xmlVersion);
+    }
+
+    /**
      * Build the XML body
      *
      * @param array<string, mixed> $content

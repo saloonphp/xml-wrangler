@@ -129,10 +129,9 @@ test('you can provide attributes', function () {
         ],
     );
 
-    $writer = new XmlWriter;
     $data = ['Saloon' => $element];
 
-    expect($writer->write('root', $data))->toBe(
+    expect(XmlWriter::make()->write('root', $data))->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
