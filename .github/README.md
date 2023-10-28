@@ -142,13 +142,17 @@ The above code will create the following XML
 ### Reading XML
 ### Writing XML
 #### Composable Elements
+Sometimes you might have a part of XML that you will reuse across multiple XML requests in your application. With XML Wrangler, you can create "composable" elements
+where you can define your XML content in a class which you can re-use across your application. Extend the `Element` class and use the
+protected static `compose` method.
+
 ```php
 <?php
 
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 
-class NestedElement extends Element
+class BelgianWaffleElement extends Element
 {
     /**
      * Compose your own element
@@ -170,8 +174,22 @@ class NestedElement extends Element
 }
 
 $writer = XmlWriter::make()->write('root', [
-    'food' => NestedElement::make(),
+    'food' => new BelgianWaffleElement,
 ]);
+```
+
+This will result in XML like this:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<breakfast_menu>
+    <food soldOut="false" bestSeller="true">
+        <name>Belgian Waffles</name>
+        <price>$5.95</price>
+        <description>Two of our famous Belgian Waffles with plenty of real maple syrup</description>
+        <calories>650</calories>
+    </food>
+</breakfast_menu>
 ```
 
 ## Credits
