@@ -7,7 +7,6 @@ namespace Saloon\XmlWrangler;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
-use VeeWee\Xml\Reader\Node\NodeSequence;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -105,62 +104,61 @@ class XmlReader
 
         $results = iterator_to_array($search);
 
-        return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
+        return array_map(fn(string $result) => $this->parseXml($result), $results)[0];
     }
 
-    protected function searchRecursively(string $query, string $buffer = null): array
+    protected function searchRecursively(string $query, bool $nullable, string $buffer = null): array
     {
         $searchTerms = explode('.', $query);
 
         $reader = isset($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
 
+        $searchTerm = $searchTerms[0];
+
         $results = $reader->provide(
-            Matcher\node_name($searchTerms[0]),
+            Matcher\node_name($searchTerm),
         );
 
         array_shift($searchTerms);
 
-        if (empty($searchTerms)) {
-            return iterator_to_array($results);
-        }
-
-        $nextSearchTerm = $searchTerms[0];
-        $isNextSearchTermNumeric = is_numeric($nextSearchTerm);
-
-        if ($isNextSearchTermNumeric === true) {
-            array_shift($searchTerms);
-        }
-
-        $nextSearchQuery = implode('.', $searchTerms);
+        $onLastSearchTerm = empty($searchTerms);
 
         $elements = [];
 
-        ray($nextSearchTerm, $isNextSearchTermNumeric);
-
         foreach ($results as $index => $result) {
-            ray($index, (int)$nextSearchTerm);
-
-            if ($isNextSearchTermNumeric === true && $index === (int)$nextSearchTerm) {
-                // If there are no more results, we could break here - otherwise we need to pass
-                // this specific result through to the next search term.
-
-                if (empty($searchTerms)) {
-                    $elements[] = $result;
-                    break;
-                }
-
-                $elements = array_merge($elements, $this->searchRecursively($nextSearchQuery, $result));
+            if ($onLastSearchTerm === true) {
+                $elements[] = $result;
+                continue;
             }
 
-            // When the search term is not numeric, we should use the same method to search into the
-            // nested result - this will ensure we only have one element in memory at a time.
+            $nextSearchTerm = $searchTerms[0];
+            $nestedSearchTerms = $searchTerms;
 
-            if ($isNextSearchTermNumeric === false) {
-                $elements = array_merge($elements, $this->searchRecursively($nextSearchQuery, $result));
+            if (is_numeric($nextSearchTerm)) {
+                $result = $index === (int)$nextSearchTerm ? $result : null;
+
+                array_shift($nestedSearchTerms);
             }
+
+            if (is_null($result)) {
+                continue;
+            }
+
+            if (empty($nestedSearchTerms)) {
+                $elements[] = $result;
+                continue;
+            }
+
+            // We need to work out how to do the number positioning. We can't really send the same
+            // position into the next search term because the subset of the search term will alwauys
+            // be position "1", so still think we have to do it here.
+
+            $elements = array_merge($elements, $this->searchRecursively(implode('.', $nestedSearchTerms), $nullable, $result));
         }
 
-        ray($elements)->red();
+        if (empty($elements)) {
+            return $nullable ? [] : throw new XmlReaderException(sprintf('Unable to find [%s] element', $searchTerm));
+        }
 
         return $elements;
     }
@@ -168,182 +166,55 @@ class XmlReader
     /**
      * Find an element from the XML
      *
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     * @param string $name
+     * @param array $withAttributes
+     * @param bool $nullable
+     * @param mixed|null $buffer
+     * @return \Saloon\XmlWrangler\Data\Element|array|null
+     * @throws \Exception
      */
     public function element(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
     {
         try {
-            $results = $this->searchRecursively($name);
+            $results = $this->searchRecursively($name, $nullable);
 
-            dd($results);
+            // We'll parse each element in the results which will convert the XML into an
+            // Element class.
 
-            $names = explode('.', $name);
+            $results = array_map($this->parseXml(...), $results);
 
-            // Instantiate the reader and search for our first name.
+            // Flatten the array of results because the key will always be the last search term
+            // that we looked for.
 
-            $reader = ! empty($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
+            $results = array_map(static function (array $element) {
+                return $element[array_key_first($element)];
+            }, $results);
 
-            $searchTerm = $names[0];
+            // Now, if there are any attributes defined we will refine our search for this.
 
-            array_shift($names);
+            if (! empty($withAttributes)) {
+                $results = array_filter($results, static function (Element $element) use ($withAttributes) {
+                    $attributes = $element->getAttributes();
 
-            $search = $reader->provide(
-                Matcher\all(
-                    Matcher\all(
-                        Matcher\node_name('name'),
-                    ),
-                ),
-            );
-
-            dd(iterator_to_array($search));
-
-            $results = [];
-
-            $nextSearchElement = $names[0] ?? null;
-
-            foreach ($search as $key => $element) {
-                if (is_null($nextSearchElement)) {
-                    $results[] = $element;
-                    continue;
-                }
-
-                // When the next search element is numeric we need to check if the key
-                // of the results matches the next search element - if it does, we
-                // can add it to our elements array and continue.
-
-                if (is_numeric($nextSearchElement)) {
-                    if ((int)$nextSearchElement !== $key) {
-                        continue;
+                    foreach ($withAttributes as $key => $attribute) {
+                        if (($attributes[$key] ?? null) !== $attribute) {
+                            return false;
+                        }
                     }
 
-                    array_shift($names);
+                    return true;
+                });
 
-                    if (empty($names)) {
-                        $name = strtok($name, '.');
-                        $results[] = $element;
-                    } else {
-                        // We'll now apply the next search element to another element method which will
-                        // recursively look through the nested XML only keeping one in memory at a
-                        // time.
-
-                        $results[] = $this->element(implode('.', $names), $withAttributes, $nullable, $element);
-                    }
-
-                    break;
-                }
-
-                $results = array_merge($results, (array)$this->element(implode('.', $names), $withAttributes, $nullable, $element));
+                $results = array_values($results);
             }
 
             if (empty($results)) {
-                return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
+                return $nullable ? null : throw new XmlReaderException('Unable to find element.');
             }
 
-            // Now we'll want to loop over each element in the results array
-            // and convert the string XML into elements.
+            // Return the results
 
-            $results = array_map(function (string|array|Element $result) {
-                return is_string($result) ? $this->parseXml($result) : $result;
-            }, $results);
-
-            if (count($results) === 1) {
-                if ($results[0] instanceof Element) {
-                    return $results[0];
-                }
-
-                return $results[0][$name];
-            }
-
-            return array_map(static function (array|Element $result) use ($name) {
-                return is_array($result) ? $result[$name] : $result;
-            }, $results);
-        } catch (Exception $exception) {
-            $this->__destruct();
-
-            throw $exception;
-        }
-    }
-
-    /**
-     * Find an element from the XML
-     *
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function elementOld(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
-    {
-        try {
-            $names = explode('.', $name);
-
-            // Instantiate the reader and search for our first name.
-
-            $reader = ! empty($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
-
-            $search = $reader->provide(
-                Matcher\all(
-                    Matcher\node_name($names[0])
-                ),
-            );
-
-            // Convert the results into an array - this will cause us to store the full array in memory.
-
-            $results = iterator_to_array($search);
-
-            if (empty($results)) {
-                return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
-            }
-
-            // When there are multiple search terms we'll run the find method again on the
-            // other search terms to search within an element.
-
-            if (count($names) > 1) {
-                array_shift($names);
-
-                // When the next search term is an array we need to change our logic a little bit.
-                // We need to create a new $results array with the result requested. If this
-                // doesn't exist we need to throw an exception like normal.
-
-                // If it does exist, then we need to shift the number off the array and continue
-                // looking. If there are more values we'll continue looking, otherwise we'll
-                // just return this value.
-
-                if (is_numeric($names[0])) {
-                    $results = [$results[$names[0]] ?? null];
-
-                    if (is_null($results[0])) {
-                        return $nullable ? null : throw new XmlReaderException(sprintf('Unable to find [%s] element', $name));
-                    }
-
-                    array_shift($names);
-
-                    // When there are no more elements to search for we will overwrite the name of the outer
-                    // array so our logic  to find the result will work.
-
-                    if (empty($names)) {
-                        $name = strtok($name, '.');
-                    }
-                }
-
-                // We'll continue searching if there are additional names to look through.
-
-                if (! empty($names)) {
-                    return $this->element(implode('.', $names), $withAttributes, $nullable, implode('', $results));
-                }
-            }
-
-            // Now we'll want to loop over each element in the results array
-            // and convert the string XML into elements.
-
-            $results = array_map(fn (string $result) => $this->parseXml($result), $results);
-
-            if (count($results) === 1) {
-                return $results[0][$name];
-            }
-
-            return array_map(static function (array $result) use ($name) {
-                return $result[$name];
-            }, $results);
+            return count($results) === 1 ? $results[0] : $results;
         } catch (Exception $exception) {
             $this->__destruct();
 
@@ -469,18 +340,5 @@ class XmlReader
             fclose($this->streamFile);
             unset($this->streamFile);
         }
-    }
-
-    /**
-     * Create a numeric node matcher
-     *
-     * @param string $number
-     * @return callable
-     */
-    public function numericNodeMatcher(string $number): callable
-    {
-        return static function (NodeSequence $sequence) use ($number): bool {
-            return $sequence->current()->position() === (int)$number + 1;
-        };
     }
 }

@@ -219,9 +219,7 @@ test('when the elements have multiple an array is returned', function () {
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $berryBerryBelgianWaffles = $reader->value('breakfast_menu.food.name.4');
-
-    dd($berryBerryBelgianWaffles);
+    $berryBerryBelgianWaffles = $reader->value('breakfast_menu.food.2');
 
     expect($berryBerryBelgianWaffles)->toEqual([
         'name' => 'Berry-Berry Belgian Waffles',
@@ -235,27 +233,86 @@ test('can use numbers to find a specific index of a nested element with dot nota
     expect($name)->toEqual('Berry-Berry Belgian Waffles');
 });
 
-test('when using dot notation it will throw exceptions if a value could not be found', function (string $search) {
+test('can search for an element and it will return every value', function () {
+    $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
+
+    $names = $reader->value('name');
+
+    expect($names)->toEqual([
+        'Belgian Waffles',
+        'Strawberry Belgian Waffles',
+        'Berry-Berry Belgian Waffles',
+        'French Toast',
+        'Homestyle Breakfast',
+    ]);
+
+    $name = $reader->value('name.2');
+
+    expect($name)->toEqual('Berry-Berry Belgian Waffles');
+});
+
+test('when using dot notation it will throw exceptions if a value could not be found', function (string $search, string $message) {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
     $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find [' . $search . '] element');
+    $this->expectExceptionMessage('Unable to find [' . $message . '] element');
 
     $reader->element($search);
 })->with([
-    'food.6', '1', '1.1',
+    ['food.6', 'food'], ['1.1', '1'],
 ]);
 
 test('can search for a nested element with specific attributes', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $soldOut = $reader->element('food', ['soldOut' => true]);
+    $soldOut = $reader->element('breakfast_menu.food', ['soldOut' => 'true']);
 
-    $bestSellers = [];
+    expect($soldOut)->toBeInstanceOf(Element::class);
 
-    $notSoldOutNotBestSeller = [];
+    expect($soldOut)->toEqual(
+        Element::make()->setAttributes(['soldOut' => 'true', 'bestSeller' => 'false'])->setContent([
+            'name' => Element::make('French Toast'),
+            'price' => Element::make('$4.50'),
+            'description' => Element::make('Thick slices made from our homemade sourdough bread'),
+            'calories' => Element::make('600'),
+        ]),
+    );
 
-    // Todo: Search with dotnotation
+    $bestSellers = $reader->element('breakfast_menu.food', ['bestSeller' => 'true']);
+
+    expect($bestSellers)->toBeArray();
+
+    expect($bestSellers)->toEqual([
+        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => Element::make('Belgian Waffles'),
+            'price' => Element::make('$5.95'),
+            'description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+            'calories' => Element::make('650'),
+        ]),
+        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => Element::make('Berry-Berry Belgian Waffles'),
+            'price' => Element::make('$8.95'),
+            'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+            'calories' => Element::make('900'),
+        ]),
+    ]);
+
+    $notSoldOutNotBestSeller = $reader->element('breakfast_menu.food', ['soldOut' => 'false', 'bestSeller' => 'false']);
+
+    expect($notSoldOutNotBestSeller)->toEqual([
+        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
+            'name' => Element::make('Strawberry Belgian Waffles'),
+            'price' => Element::make('$7.95'),
+            'description' => Element::make('Light Belgian waffles covered with strawberries and whipped cream'),
+            'calories' => Element::make('900'),
+        ]),
+        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
+            'name' => Element::make('Homestyle Breakfast'),
+            'price' => Element::make('$6.95'),
+            'description' => Element::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
+            'calories' => Element::make('950'),
+        ]),
+    ]);
 });
 
 test('can parse xml from a file', function () {
@@ -277,16 +334,14 @@ test('if the file is unreadable it will throw an exception', function () {
 test('can parse xml from a stream', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
 
-//    $food = $reader->value('breakfast_menu.food');
-//
-//    expect($food)->toBeArray();
-//    expect($food)->toHaveCount(5);
+    $food = $reader->value('breakfast_menu.food');
+
+    expect($food)->toBeArray();
+    expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
     $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
-
-
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
