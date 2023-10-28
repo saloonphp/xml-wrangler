@@ -184,3 +184,34 @@ test('the root element content can be merged with the main content', function ()
 XML
     );
 });
+
+test('you can use other reusable element classes to build up data', function () {
+    $writer = new XmlWriter;
+
+    $xml = $writer->write('root', [
+        'nested' => new class extends Element {
+
+            public function __construct()
+            {
+                parent::__construct();
+
+                $this->setContent([
+                    'hello' => 'Sam',
+                ]);
+            }
+
+        },
+    ]);
+
+    expect($xml)->toBe(
+        <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <nested>
+    <hello>Sam</hello>
+  </nested>
+</root>
+
+XML
+    );
+});

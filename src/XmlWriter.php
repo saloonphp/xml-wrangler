@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
+use Closure;
 use Spatie\ArrayToXml\ArrayToXml;
 use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\Data\Element;
@@ -194,7 +195,7 @@ class XmlWriter
                 $value = $this->convertXmlContentIntoArray($value);
             }
 
-            if (is_callable($value)) {
+            if ($value instanceof Closure) {
                 $value = function () use ($value) {
                     return $this->convertElementIntoArray(new Element($value()));
                 };
