@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Saloon\XmlWrangler\Tests\Fixtures\BelgianWafflesElement;
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
 use Saloon\XmlWrangler\Exceptions\XmlWriterException;
+use Saloon\XmlWrangler\Tests\Fixtures\BelgianWafflesElement;
 
 test('the xml writer can write with just a root element', function () {
     $writer = new XmlWriter;
