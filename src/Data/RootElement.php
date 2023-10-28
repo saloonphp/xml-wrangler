@@ -19,6 +19,9 @@ class RootElement
 
     /**
      * Constructor
+     *
+     * @param array<string, string> $attributes
+     * @param array<string, string> $namespaces
      */
     public function __construct(string $name, mixed $content = null, array $attributes = [], array $namespaces = [])
     {
@@ -31,6 +34,9 @@ class RootElement
 
     /**
      * Create a root element instance
+     *
+     * @param array<string, string> $attributes
+     * @param array<string, string> $namespaces
      */
     public static function make(string $name, mixed $content = null, array $attributes = [], array $namespaces = []): static
     {

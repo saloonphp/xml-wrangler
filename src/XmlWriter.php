@@ -24,6 +24,8 @@ class XmlWriter
 
     /**
      * Additional processing instructions
+     *
+     * @var array<string, string>
      */
     protected array $processingInstructions = [];
 
@@ -39,6 +41,7 @@ class XmlWriter
     /**
      * Build the XML body
      *
+     * @param array<string, mixed> $content
      * @throws \DOMException
      * @throws \Saloon\XmlWrangler\Exceptions\XmlWriterException
      */
@@ -92,6 +95,8 @@ class XmlWriter
 
     /**
      * Validate top level content
+     *
+     * @param array<string, mixed> $content
      */
     protected function isTopLevelContentValid(array $content): bool
     {
@@ -106,14 +111,18 @@ class XmlWriter
 
     /**
      * Convert an element into an array
+     *
+     * @return array<string, mixed>
      */
-    public function convertElementIntoArray(Element $element): array
+    protected function convertElementIntoArray(Element $element): array
     {
         return array_merge($this->buildElementAttributes($element), $this->buildElementContent($element));
     }
 
     /**
      * Build element attributes
+     *
+     * @return array<string, mixed>
      */
     protected function buildElementAttributes(Element|RootElement $element): array
     {
@@ -131,6 +140,8 @@ class XmlWriter
 
     /**
      * Build element content
+     *
+     * @return array<string, mixed>
      */
     protected function buildElementContent(Element $element): array
     {
@@ -162,6 +173,9 @@ class XmlWriter
 
     /**
      * Convert XML content into array
+     *
+     * @param array<string, Element|CDATA|callable|array<mixed>> $content
+     * @return array<string, mixed>
      */
     protected function convertXmlContentIntoArray(array $content = []): array
     {

@@ -16,6 +16,9 @@ class Element
      * Constructor
      *
      * Base XML Element DTO
+     *
+     * @param array<string, string> $attributes
+     * @param array<string, string> $namespaces
      */
     public function __construct(mixed $content = null, array $attributes = [], array $namespaces = [])
     {
@@ -27,6 +30,9 @@ class Element
 
     /**
      * Create an element instance
+     *
+     * @param array<string, string> $attributes
+     * @param array<string, string> $namespaces
      */
     public static function make(mixed $content = null, array $attributes = [], array $namespaces = []): static
     {

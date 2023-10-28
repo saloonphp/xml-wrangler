@@ -11,7 +11,10 @@ parameters:
   #editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
   #editorUrl: 'vscode://file/%%file%%:%%line%%'
 
-  level: 7
+  level: 6
 
   paths:
   - src
+
+  ignoreErrors:
+  - "#^Unsafe usage of new static\\(\\)\\.$#"
