@@ -6,6 +6,14 @@
 
 XML Wrangler is a minimalist PHP library designed to make reading and writing XML easy. XML Wrangler has been built with developer experience in mind. You can read any type of XML file, even with complex namespaces and even large XML files. It will also throw exceptions if the XML is invalid!
 
+## Installation
+XML Wrangler is installed via Composer.
+
+```
+composer require saloonphp/xml-wrangler
+```
+> Supports PHP 8.1+
+
 ## Reading XML
 Reading XML can be done by simply passing the XML string or file into the XML reader and using one of the many methods to search and find a specific element. 
 You can also convert every element into an easily traversable array. If you need to access attributes on an element you can use
@@ -71,7 +79,8 @@ Writing XML is as simple as defining a PHP array and using keys and values to de
 ```php
 <?php
 
-use Saloon\XmlWrangler\Data\Element;use Saloon\XmlWrangler\XmlWriter;
+use Saloon\XmlWrangler\Data\Element;
+use Saloon\XmlWrangler\XmlWriter;
 
 $writer = new XmlWriter;
 
@@ -98,10 +107,41 @@ $xml = $writer->write('breakfast_menu', [
             'price' => '$8.95',
             'description' => 'Light Belgian waffles covered with an assortment of fresh berries and whipped cream',
             'calories' => '900',
-        ])->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false']),
+        ])->setAttributes(['bestSeller' => 'true']),
     ],
 ]);
 ```
+The above code will create the following XML
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<breakfast_menu>
+  <food>
+    <name>Belgian Waffles</name>
+    <price>$5.95</price>
+    <description>Two of our famous Belgian Waffles with plenty of real maple syrup</description>
+    <calories>650</calories>
+  </food>
+  <food>
+    <name>Strawberry Belgian Waffles</name>
+    <price>$7.95</price>
+    <description>Light Belgian waffles covered with strawberries and whipped cream</description>
+    <calories>900</calories>
+  </food>
+  <food bestSeller="true">
+    <name>Berry-Berry Belgian Waffles</name>
+    <price>$8.95</price>
+    <description>Light Belgian waffles covered with an assortment of fresh berries and whipped cream</description>
+    <calories>900</calories>
+  </food>
+</breakfast_menu>
+```
+> **Note**
+> Full documentation on the XML reader can be found below.
+
+## Documentation
+### Reading XML
+### Writing XML
+####
 
 ## Credits
 XML Wrangler is a simple wrapper around two really powerful libraries which do all the legwork. These two libraries each have their own ways of
