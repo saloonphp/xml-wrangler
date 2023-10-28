@@ -4,25 +4,21 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
-use DOMDocument;
-use DOMElement;
 use DOMXPath;
 use Exception;
+use DOMDocument;
 use InvalidArgumentException;
-use Symfony\Component\DomCrawler\Crawler;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
-use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Encoding\xml_decode;
+use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 
 class XmlReader
 {
     /**
      * XML Reader
-     *
-     * @var \VeeWee\Xml\Reader\Reader
      */
     protected Reader $reader;
 
@@ -108,7 +104,7 @@ class XmlReader
 
         $results = iterator_to_array($search);
 
-        return array_map(fn(string $result) => $this->parseXml($result), $results)[0];
+        return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
     }
 
     protected function searchRecursively(string $query, bool $nullable, string $buffer = null): array
@@ -170,11 +166,6 @@ class XmlReader
     /**
      * Find an element from the XML
      *
-     * @param string $name
-     * @param array $withAttributes
-     * @param bool $nullable
-     * @param mixed|null $buffer
-     * @return \Saloon\XmlWrangler\Data\Element|array|null
      * @throws \Exception
      */
     public function element(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
@@ -260,9 +251,6 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
-     * @param string $query
-     * @param bool $nullable
-     * @return array|\Saloon\XmlWrangler\Data\Element|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */

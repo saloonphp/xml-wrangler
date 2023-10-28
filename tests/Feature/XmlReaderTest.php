@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use Saloon\XmlWrangler\XmlReader;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
-use Saloon\XmlWrangler\XmlReader;
 
 test('can parse xml and convert it into an array of elements', function () {
     $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
@@ -64,8 +64,8 @@ test('can parse xml and convert it into an array of elements', function () {
                 $berryberryBelgianWaffles,
                 $frenchToast,
                 $homestyleBreakfast,
-            ])
-        ])->addAttribute('name', 'Big G\'s Breakfasts')
+            ]),
+        ])->addAttribute('name', 'Big G\'s Breakfasts'),
     ]);
 });
 
@@ -106,9 +106,9 @@ test('can parse xml and convert it into an array of values', function () {
                     'price' => '$6.95',
                     'description' => 'Two eggs, bacon or sausage, toast, and our ever-popular hash browns',
                     'calories' => '950',
-                ]
-            ]
-        ]
+                ],
+            ],
+        ],
     ]);
 });
 
@@ -212,7 +212,7 @@ test('when the elements have multiple an array is returned', function () {
             'price' => '$6.95',
             'description' => 'Two eggs, bacon or sausage, toast, and our ever-popular hash browns',
             'calories' => '950',
-        ]
+        ],
     ]);
 });
 
