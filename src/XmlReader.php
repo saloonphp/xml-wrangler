@@ -108,6 +108,63 @@ class XmlReader
         return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
     }
 
+    protected function searchRecursively(string $query, string $buffer = null): array
+    {
+        $searchTerms = explode('.', $query);
+
+        $reader = isset($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
+
+        $results = $reader->provide(
+            Matcher\node_name($searchTerms[0]),
+        );
+
+        array_shift($searchTerms);
+
+        if (empty($searchTerms)) {
+            return iterator_to_array($results);
+        }
+
+        $nextSearchTerm = $searchTerms[0];
+        $isNextSearchTermNumeric = is_numeric($nextSearchTerm);
+
+        if ($isNextSearchTermNumeric === true) {
+            array_shift($searchTerms);
+        }
+
+        $nextSearchQuery = implode('.', $searchTerms);
+
+        $elements = [];
+
+        ray($nextSearchTerm, $isNextSearchTermNumeric);
+
+        foreach ($results as $index => $result) {
+            ray($index, (int)$nextSearchTerm);
+
+            if ($isNextSearchTermNumeric === true && $index === (int)$nextSearchTerm) {
+                // If there are no more results, we could break here - otherwise we need to pass
+                // this specific result through to the next search term.
+
+                if (empty($searchTerms)) {
+                    $elements[] = $result;
+                    break;
+                }
+
+                $elements = array_merge($elements, $this->searchRecursively($nextSearchQuery, $result));
+            }
+
+            // When the search term is not numeric, we should use the same method to search into the
+            // nested result - this will ensure we only have one element in memory at a time.
+
+            if ($isNextSearchTermNumeric === false) {
+                $elements = array_merge($elements, $this->searchRecursively($nextSearchQuery, $result));
+            }
+        }
+
+        ray($elements)->red();
+
+        return $elements;
+    }
+
     /**
      * Find an element from the XML
      *
@@ -117,6 +174,10 @@ class XmlReader
     public function element(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
     {
         try {
+            $results = $this->searchRecursively($name);
+
+            dd($results);
+
             $names = explode('.', $name);
 
             // Instantiate the reader and search for our first name.
@@ -125,14 +186,17 @@ class XmlReader
 
             $searchTerm = $names[0];
 
-            ray($searchTerm)->red();
-            ray($buffer)->green();
-
             array_shift($names);
 
             $search = $reader->provide(
-                Matcher\node_name($searchTerm),
+                Matcher\all(
+                    Matcher\all(
+                        Matcher\node_name('name'),
+                    ),
+                ),
             );
+
+            dd(iterator_to_array($search));
 
             $results = [];
 
@@ -182,8 +246,6 @@ class XmlReader
             $results = array_map(function (string|array|Element $result) {
                 return is_string($result) ? $this->parseXml($result) : $result;
             }, $results);
-
-            ray($results);
 
             if (count($results) === 1) {
                 if ($results[0] instanceof Element) {

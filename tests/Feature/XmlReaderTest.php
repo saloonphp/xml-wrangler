@@ -219,7 +219,9 @@ test('when the elements have multiple an array is returned', function () {
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $berryBerryBelgianWaffles = $reader->value('food.2');
+    $berryBerryBelgianWaffles = $reader->value('breakfast_menu.food.name.4');
+
+    dd($berryBerryBelgianWaffles);
 
     expect($berryBerryBelgianWaffles)->toEqual([
         'name' => 'Berry-Berry Belgian Waffles',
@@ -283,6 +285,8 @@ test('can parse xml from a stream', function () {
     // Let's test we can make multiple queries
 
     $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+
+
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });

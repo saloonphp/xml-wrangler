@@ -30,4 +30,5 @@
     <description>Two eggs, bacon or sausage, toast, and our ever-popular hash browns</description>
     <calories>950</calories>
   </food>
+  <name>sammy</name>
 </breakfast_menu>
