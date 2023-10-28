@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
 use Exception;
 use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
+use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Encoding\xml_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 
@@ -253,13 +257,63 @@ class XmlReader
         return $this->convertElementArrayIntoValues($value);
     }
 
-    public function xpath(string $query): mixed
+    /**
+     * Search for an element with xpath
+     *
+     * @param string $query
+     * @param bool $nullable
+     * @return array|\Saloon\XmlWrangler\Data\Element|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function xpathElement(string $query, bool $nullable = false): array|Element|null
     {
-        $xml = iterator_to_array($this->reader->provide(Matcher\all()))[0];
+        $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
 
-        $reader = new Crawler($xml);
+        $dom = new DOMDocument;
+        $dom->loadXML($xmlString);
 
-        dd($reader);
+        $elements = (new DOMXPath($dom))->query($query);
+
+        if ($elements->count() === 0) {
+            return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
+        }
+
+        $results = [];
+
+        foreach ($elements as $element) {
+            $decodedElement = element_decode($element);
+            $firstKey = array_key_first($decodedElement);
+
+            $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
+        }
+
+        $results = array_map(static function (array $element) {
+            return $element[array_key_first($element)];
+        }, $results);
+
+        return count($results) === 1 ? $results[0] : $results;
+    }
+
+    /**
+     * Find and retrieve value of element
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function xpathValue(string $name, bool $nullable = false): mixed
+    {
+        $value = $this->xpathElement($name, $nullable);
+
+        if ($value instanceof Element) {
+            $value = $value->getContent();
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return $this->convertElementArrayIntoValues($value);
     }
 
     /**

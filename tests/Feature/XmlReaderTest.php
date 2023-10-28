@@ -349,7 +349,42 @@ test('can parse xml from a stream', function () {
 test('can use xpath to find an element', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
 
-    // $food = $reader->xpath('breakfast_menu/book[3]');
+    $bestSellers = $reader->xpathValue('/breakfast_menu/food[@bestSeller="true"]');
 
-    // dd($food);
+    expect($bestSellers)->toEqual([
+        [
+            'name' => 'Belgian Waffles',
+            'price' => '$5.95',
+            'description' => 'Two of our famous Belgian Waffles with plenty of real maple syrup',
+            'calories' => '650',
+        ],
+        [
+            'name' => 'Berry-Berry Belgian Waffles',
+            'price' => '$8.95',
+            'description' => 'Light Belgian waffles covered with an assortment of fresh berries and whipped cream',
+            'calories' => '900',
+        ],
+    ]);
+
+    // Let's test a single value
+
+    $berryBerryWaffles = $reader->xpathElement('/breakfast_menu/food[3]');
+
+    expect($berryBerryWaffles)->toEqual(
+        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => Element::make('Berry-Berry Belgian Waffles'),
+            'price' => Element::make('$8.95'),
+            'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+            'calories' => Element::make('900'),
+        ]),
+    );
+});
+
+test('xpath method will throw an exception if search cannot be found', function () {
+    $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
+
+    $this->expectException(XmlReaderException::class);
+    $this->expectExceptionMessage('No results found for [/breakfast_menu/food[@tasty="true"]].');
+
+    $reader->xpathValue('/breakfast_menu/food[@tasty="true"]');
 });
