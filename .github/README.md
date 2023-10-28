@@ -141,7 +141,38 @@ The above code will create the following XML
 ## Documentation
 ### Reading XML
 ### Writing XML
-####
+#### Composable Elements
+```php
+<?php
+
+use Saloon\XmlWrangler\XmlWriter;
+use Saloon\XmlWrangler\Data\Element;
+
+class NestedElement extends Element
+{
+    /**
+     * Compose your own element
+     */
+    protected static function compose(Element $element): void
+    {
+        $element
+            ->setAttributes([
+                'soldOut' => 'false',
+                'bestSeller' => 'true',
+            ])
+            ->setContent([
+                'name' => 'Belgian Waffles',
+                'price' => '$5.95',
+                'description' => 'Two of our famous Belgian Waffles with plenty of real maple syrup',
+                'calories' => '650',
+            ]);
+    }
+}
+
+$writer = XmlWriter::make()->write('root', [
+    'food' => NestedElement::make(),
+]);
+```
 
 ## Credits
 XML Wrangler is a simple wrapper around two really powerful libraries which do all the legwork. These two libraries each have their own ways of

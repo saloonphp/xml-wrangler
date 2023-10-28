@@ -26,6 +26,8 @@ class Element
             ->setContent($content)
             ->setAttributes($attributes)
             ->setNamespaces($namespaces);
+
+        static::compose($this);
     }
 
     /**
@@ -37,5 +39,13 @@ class Element
     public static function make(mixed $content = null, array $attributes = [], array $namespaces = []): static
     {
         return new static($content, $attributes, $namespaces);
+    }
+
+    /**
+     * Define your own XML element
+     */
+    protected static function compose(Element $element): void
+    {
+        //
     }
 }

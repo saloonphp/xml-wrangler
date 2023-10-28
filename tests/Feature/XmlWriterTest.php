@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Saloon\XmlWrangler\Tests\Fixtures\BelgianWafflesElement;
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
@@ -185,31 +186,23 @@ XML
     );
 });
 
-test('you can use other reusable element classes to build up data', function () {
+test('you can use composable elements in the writer', function () {
     $writer = new XmlWriter;
 
     $xml = $writer->write('root', [
-        'nested' => new class extends Element {
-
-            public function __construct()
-            {
-                parent::__construct();
-
-                $this->setContent([
-                    'hello' => 'Sam',
-                ]);
-            }
-
-        },
+        'food' => new BelgianWafflesElement,
     ]);
 
     expect($xml)->toBe(
         <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <nested>
-    <hello>Sam</hello>
-  </nested>
+  <food soldOut="false" bestSeller="true">
+    <name>Belgian Waffles</name>
+    <price>$5.95</price>
+    <description>Two of our famous Belgian Waffles with plenty of real maple syrup</description>
+    <calories>650</calories>
+  </food>
 </root>
 
 XML
