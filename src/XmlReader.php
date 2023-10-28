@@ -107,6 +107,13 @@ class XmlReader
         return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
     }
 
+    /**
+     * Recursively search through elements
+     *
+     * This method only keeps one element in memory at a time.
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
     protected function searchRecursively(string $query, bool $nullable, string $buffer = null): array
     {
         $searchTerms = explode('.', $query);
