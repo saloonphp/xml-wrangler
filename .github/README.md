@@ -62,7 +62,7 @@ $reader->element('breakfast_menu.food.0'); // Element::class
 $reader->xpathValue('//breakfast_menu/food[@bestSeller="true"]/name'); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
 ```
 
-> **info**
+> **Note**
 > Full documentation on the XML reader can be found below.
 
 ## Writing XML
