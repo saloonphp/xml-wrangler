@@ -6,6 +6,7 @@ namespace Saloon\XmlWrangler;
 
 use DOMXPath;
 use Exception;
+use DOMElement;
 use DOMDocument;
 use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
@@ -25,12 +26,14 @@ class XmlReader
     /**
      * Temporary File For Stream
      *
-     * @var resource
+     * @var resource|null
      */
-    protected mixed $streamFile;
+    protected mixed $streamFile = null;
 
     /**
      * Constructor
+     *
+     * @param resource $streamFile
      */
     public function __construct(Reader $reader, mixed $streamFile = null)
     {
@@ -82,7 +85,9 @@ class XmlReader
         }
 
         while (! feof($resource)) {
-            fwrite($temporaryFile, fread($resource, 1024));
+            if ($bytes = fread($resource, 1024)) {
+                fwrite($temporaryFile, $bytes);
+            }
         }
 
         rewind($temporaryFile);
@@ -96,7 +101,7 @@ class XmlReader
     /**
      * Get all elements
      *
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     * @return array<string, Element>
      */
     public function elements(): array
     {
@@ -104,7 +109,7 @@ class XmlReader
 
         $results = iterator_to_array($search);
 
-        return array_map(fn (string $result) => $this->parseXml($result), $results)[0];
+        return array_map($this->parseXml(...), $results)[0];
     }
 
     /**
@@ -112,6 +117,7 @@ class XmlReader
      *
      * This method only keeps one element in memory at a time.
      *
+     * @return array<int, string>
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      */
     protected function searchRecursively(string $query, bool $nullable, string $buffer = null): array
@@ -156,10 +162,6 @@ class XmlReader
                 continue;
             }
 
-            // We need to work out how to do the number positioning. We can't really send the same
-            // position into the next search term because the subset of the search term will alwauys
-            // be position "1", so still think we have to do it here.
-
             $elements = array_merge($elements, $this->searchRecursively(implode('.', $nestedSearchTerms), $nullable, $result));
         }
 
@@ -173,9 +175,11 @@ class XmlReader
     /**
      * Find an element from the XML
      *
-     * @throws \Exception
+     * @param array<string, string> $withAttributes
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      */
-    public function element(string $name, array $withAttributes = [], bool $nullable = false, mixed $buffer = null): Element|array|null
+    public function element(string $name, array $withAttributes = [], bool $nullable = false): Element|array|null
     {
         try {
             $results = $this->searchRecursively($name, $nullable);
@@ -227,7 +231,7 @@ class XmlReader
     /**
      * Convert the XML into an array
      *
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     * @return array<string, mixed>
      */
     public function values(): array
     {
@@ -237,10 +241,11 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
+     * @param array<string, string> $withAttributes
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function value(string $name, array $withAttributes = [], bool $nullable = false): mixed
+    public function value(string $name, array $withAttributes = [], bool $nullable = false): Element|array|string|null
     {
         $value = $this->element($name, $withAttributes, $nullable);
 
@@ -258,10 +263,11 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathElement(string $query, bool $nullable = false): array|Element|null
+    public function xpathElement(string $query, bool $nullable = false): Element|array|null
     {
         $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
 
@@ -270,15 +276,19 @@ class XmlReader
 
         $elements = (new DOMXPath($dom))->query($query);
 
-        if ($elements->count() === 0) {
+        if ($elements === false || $elements->count() === 0) {
             return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
         }
 
         $results = [];
 
         foreach ($elements as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
             $decodedElement = element_decode($element);
-            $firstKey = array_key_first($decodedElement);
+            $firstKey = (string)array_key_first($decodedElement);
 
             $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
         }
@@ -293,10 +303,11 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathValue(string $name, bool $nullable = false): mixed
+    public function xpathValue(string $name, bool $nullable = false): Element|array|string|null
     {
         $value = $this->xpathElement($name, $nullable);
 
@@ -313,6 +324,9 @@ class XmlReader
 
     /**
      * Recursively convert element array into values
+     *
+     * @param array<string, mixed> $elements
+     * @return array<string, mixed>
      */
     protected function convertElementArrayIntoValues(array $elements): array
     {
@@ -330,6 +344,7 @@ class XmlReader
     /**
      * Parse the raw XML string into elements
      *
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
     protected function parseXml(string $xml): Element|array
@@ -343,6 +358,8 @@ class XmlReader
 
     /**
      * Convert the array into elements
+     *
+     * @return array<string, mixed>|\Saloon\XmlWrangler\Data\Element
      */
     protected function convertArrayIntoElements(?string $key, mixed $value): array|Element
     {

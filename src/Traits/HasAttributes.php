@@ -8,6 +8,8 @@ trait HasAttributes
 {
     /**
      * Attributes
+     *
+     * @var array<string, string>
      */
     protected array $attributes = [];
 
@@ -54,7 +56,7 @@ trait HasAttributes
     /**
      * Set the attributes on the element
      *
-     * @param array<string, mixed> $attributes
+     * @param array<string, string> $attributes
      * @return $this
      */
     public function setAttributes(array $attributes): static
@@ -67,6 +69,7 @@ trait HasAttributes
     /**
      * Set the namespaces on the element
      *
+     * @param array<string, string> $namespaces
      * @return $this
      */
     public function setNamespaces(array $namespaces): static
@@ -80,6 +83,8 @@ trait HasAttributes
 
     /**
      * Get all attributes
+     *
+     * @return array<string, string>
      */
     public function getAttributes(): array
     {
