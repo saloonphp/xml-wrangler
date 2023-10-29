@@ -401,3 +401,11 @@ test('you can read cdata', function () {
         'notes' => 'This is an example of CDATA content inside of an element. Special characters like % £ are allowed.',
     ]);
 });
+
+test('when an element has attributes and text content it will still be converted', function () {
+    $reader = XmlReader::fromString('<food bestSeller="true">Berry-Berry Belgian Waffles</food>');
+
+    expect($reader->elements())->toEqual([
+        'food' => Element::make('Berry-Berry Belgian Waffles')->addAttribute('bestSeller', 'true'),
+    ]);
+});
