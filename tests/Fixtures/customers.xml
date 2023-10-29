@@ -18,6 +18,7 @@
             <street>120 Ridge</street>
             <state>MA</state>
             <zip>01760</zip>
+            <notes><![CDATA[This is an example of CDATA content inside of an element. Special characters like % £ are allowed.]]></notes>
         </address>
     </customer>
 </customers>

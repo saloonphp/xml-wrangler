@@ -27,7 +27,7 @@ class Element
             ->setAttributes($attributes)
             ->setNamespaces($namespaces);
 
-        static::compose($this);
+        $this->compose();
     }
 
     /**
@@ -42,9 +42,11 @@ class Element
     }
 
     /**
-     * Define your own XML element
+     * Compose the Element.
+     *
+     * You can use $this to add content, attributes and namespaces.
      */
-    protected static function compose(Element $element): void
+    protected function compose(): void
     {
         //
     }

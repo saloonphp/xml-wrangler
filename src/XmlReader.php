@@ -113,6 +113,156 @@ class XmlReader
     }
 
     /**
+     * Find an element from the XML
+     *
+     * @param array<string, string> $withAttributes
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public function element(string $name, array $withAttributes = [], bool $nullable = false): Element|array|null
+    {
+        try {
+            $results = $this->searchRecursively($name, $nullable);
+
+            // We'll parse each element in the results which will convert the XML into an
+            // Element class.
+
+            $results = array_map($this->parseXml(...), $results);
+
+            // Flatten the array of results because the key will always be the last search term
+            // that we looked for.
+
+            $results = array_map(static function (array $element) {
+                return $element[array_key_first($element)];
+            }, $results);
+
+            // Now, if there are any attributes defined we will refine our search for this.
+
+            if (! empty($withAttributes)) {
+                $results = array_filter($results, static function (Element $element) use ($withAttributes) {
+                    $attributes = $element->getAttributes();
+
+                    foreach ($withAttributes as $key => $attribute) {
+                        if (($attributes[$key] ?? null) !== $attribute) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+                $results = array_values($results);
+            }
+
+            if (empty($results)) {
+                return $nullable ? null : throw new XmlReaderException('Unable to find element.');
+            }
+
+            // Return the results
+
+            return count($results) === 1 ? $results[0] : $results;
+        } catch (Exception $exception) {
+            $this->__destruct();
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Search for an element with xpath
+     *
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function xpathElement(string $query, bool $nullable = false): Element|array|null
+    {
+        $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
+
+        $dom = new DOMDocument;
+        $dom->loadXML($xmlString);
+
+        $elements = (new DOMXPath($dom))->query($query);
+
+        if ($elements === false || $elements->count() === 0) {
+            return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
+        }
+
+        $results = [];
+
+        foreach ($elements as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
+            $decodedElement = element_decode($element);
+            $firstKey = (string)array_key_first($decodedElement);
+
+            $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
+        }
+
+        $results = array_map(static function (array $element) {
+            return $element[array_key_first($element)];
+        }, $results);
+
+        return count($results) === 1 ? $results[0] : $results;
+    }
+
+    /**
+     * Convert the XML into an array
+     *
+     * @return array<string, mixed>
+     */
+    public function values(): array
+    {
+        return $this->convertElementArrayIntoValues($this->elements());
+    }
+
+    /**
+     * Find and retrieve value of element
+     *
+     * @param array<string, string> $withAttributes
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public function value(string $name, array $withAttributes = [], bool $nullable = false): Element|array|string|null
+    {
+        $value = $this->element($name, $withAttributes, $nullable);
+
+        if ($value instanceof Element) {
+            $value = $value->getContent();
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return $this->convertElementArrayIntoValues($value);
+    }
+
+    /**
+     * Find and retrieve value of element
+     *
+     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     */
+    public function xpathValue(string $name, bool $nullable = false): Element|array|string|null
+    {
+        $value = $this->xpathElement($name, $nullable);
+
+        if ($value instanceof Element) {
+            $value = $value->getContent();
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return $this->convertElementArrayIntoValues($value);
+    }
+
+    /**
      * Recursively search through elements
      *
      * This method only keeps one element in memory at a time.
@@ -173,156 +323,6 @@ class XmlReader
     }
 
     /**
-     * Find an element from the XML
-     *
-     * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     */
-    public function element(string $name, array $withAttributes = [], bool $nullable = false): Element|array|null
-    {
-        try {
-            $results = $this->searchRecursively($name, $nullable);
-
-            // We'll parse each element in the results which will convert the XML into an
-            // Element class.
-
-            $results = array_map($this->parseXml(...), $results);
-
-            // Flatten the array of results because the key will always be the last search term
-            // that we looked for.
-
-            $results = array_map(static function (array $element) {
-                return $element[array_key_first($element)];
-            }, $results);
-
-            // Now, if there are any attributes defined we will refine our search for this.
-
-            if (! empty($withAttributes)) {
-                $results = array_filter($results, static function (Element $element) use ($withAttributes) {
-                    $attributes = $element->getAttributes();
-
-                    foreach ($withAttributes as $key => $attribute) {
-                        if (($attributes[$key] ?? null) !== $attribute) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                });
-
-                $results = array_values($results);
-            }
-
-            if (empty($results)) {
-                return $nullable ? null : throw new XmlReaderException('Unable to find element.');
-            }
-
-            // Return the results
-
-            return count($results) === 1 ? $results[0] : $results;
-        } catch (Exception $exception) {
-            $this->__destruct();
-
-            throw $exception;
-        }
-    }
-
-    /**
-     * Convert the XML into an array
-     *
-     * @return array<string, mixed>
-     */
-    public function values(): array
-    {
-        return $this->convertElementArrayIntoValues($this->elements());
-    }
-
-    /**
-     * Find and retrieve value of element
-     *
-     * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     */
-    public function value(string $name, array $withAttributes = [], bool $nullable = false): Element|array|string|null
-    {
-        $value = $this->element($name, $withAttributes, $nullable);
-
-        if ($value instanceof Element) {
-            $value = $value->getContent();
-        }
-
-        if (! is_array($value)) {
-            return $value;
-        }
-
-        return $this->convertElementArrayIntoValues($value);
-    }
-
-    /**
-     * Search for an element with xpath
-     *
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function xpathElement(string $query, bool $nullable = false): Element|array|null
-    {
-        $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
-
-        $dom = new DOMDocument;
-        $dom->loadXML($xmlString);
-
-        $elements = (new DOMXPath($dom))->query($query);
-
-        if ($elements === false || $elements->count() === 0) {
-            return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
-        }
-
-        $results = [];
-
-        foreach ($elements as $element) {
-            if (! $element instanceof DOMElement) {
-                continue;
-            }
-
-            $decodedElement = element_decode($element);
-            $firstKey = (string)array_key_first($decodedElement);
-
-            $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
-        }
-
-        $results = array_map(static function (array $element) {
-            return $element[array_key_first($element)];
-        }, $results);
-
-        return count($results) === 1 ? $results[0] : $results;
-    }
-
-    /**
-     * Find and retrieve value of element
-     *
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
-     */
-    public function xpathValue(string $name, bool $nullable = false): Element|array|string|null
-    {
-        $value = $this->xpathElement($name, $nullable);
-
-        if ($value instanceof Element) {
-            $value = $value->getContent();
-        }
-
-        if (! is_array($value)) {
-            return $value;
-        }
-
-        return $this->convertElementArrayIntoValues($value);
-    }
-
-    /**
      * Recursively convert element array into values
      *
      * @param array<string, mixed> $elements
@@ -371,7 +371,8 @@ class XmlReader
 
             unset($value['@namespaces'], $value['@attributes']);
 
-            // Todo: Clean up nested if statements
+            // When there is just one value left and that value is "@value" we will
+            // set the content of the element to be this value.
 
             if (count($value) === 1 && isset($value['@value'])) {
                 $element->setContent($value['@value']);

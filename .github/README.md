@@ -152,14 +152,11 @@ protected static `compose` method.
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 
-class BelgianWaffleElement extends Element
+class BelgianWafflesElement extends Element
 {
-    /**
-     * Compose your own element
-     */
-    protected static function compose(Element $element): void
+    protected function compose(): void
     {
-        $element
+        $this
             ->setAttributes([
                 'soldOut' => 'false',
                 'bestSeller' => 'true',
@@ -174,7 +171,7 @@ class BelgianWaffleElement extends Element
 }
 
 $writer = XmlWriter::make()->write('root', [
-    'food' => new BelgianWaffleElement,
+    'food' => new BelgianWafflesElement,
 ]);
 ```
 

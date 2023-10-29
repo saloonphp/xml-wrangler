@@ -388,3 +388,16 @@ test('xpath method will throw an exception if search cannot be found', function 
 
     $reader->xpathValue('/breakfast_menu/food[@tasty="true"]');
 });
+
+test('you can read cdata', function () {
+    $reader = XmlReader::fromString(file_get_contents('tests/Fixtures/customers.xml'));
+
+    $address = $reader->value('customers.customer.address.2');
+
+    expect($address)->toEqual([
+        'street' => '120 Ridge',
+        'state' => 'MA',
+        'zip' => '01760',
+        'notes' => 'This is an example of CDATA content inside of an element. Special characters like % £ are allowed.',
+    ]);
+});

@@ -76,4 +76,12 @@ class RootElement
 
         return $this;
     }
+
+    /**
+     * Create an instance from an element
+     */
+    public static function fromElement(string $name, Element $element): static
+    {
+        return new static($name, $element->getContent(), $element->getAttributes());
+    }
 }

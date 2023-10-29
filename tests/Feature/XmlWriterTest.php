@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Saloon\XmlWrangler\XmlReader;
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Data\RootElement;
@@ -190,7 +191,7 @@ test('you can use composable elements in the writer', function () {
     $writer = new XmlWriter;
 
     $xml = $writer->write('root', [
-        'food' => new BelgianWafflesElement,
+        'food' => new BelgianWafflesElement('Belgian Waffles'),
     ]);
 
     expect($xml)->toBe(
@@ -207,4 +208,14 @@ test('you can use composable elements in the writer', function () {
 
 XML
     );
+});
+
+test('you can read xml and pass it into the writer and it is exactly the same', function () {
+    $xmlReader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
+
+    $rootElement = RootElement::fromElement('breakfast_menu', $xmlReader->elements()['breakfast_menu']);
+
+    $xml = XmlWriter::make()->write($rootElement, []);
+
+    expect($xml)->toEqual(file_get_contents('tests/Fixtures/breakfast-menu.xml'));
 });
