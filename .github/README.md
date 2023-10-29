@@ -197,6 +197,6 @@ XML Wrangler is a simple wrapper around two really powerful libraries which do a
 
 ### Other Credits
 
+- [Sam Carré](https://github.com/sammyjo20)
 - [Toon Verwerft](https://github.com/veewee)
 - [Spatie](https://github.com/spatie)
-- [Sam Carré](https://github.com/sammyjo20)
