@@ -190,8 +190,7 @@ This will result in XML like this:
 ```
 
 ## Credits
-XML Wrangler is a simple wrapper around two really powerful libraries which do all the legwork. These two libraries each have their own ways of
-handling XML and certainly deserve a star.
+XML Wrangler is a simple wrapper around two really powerful libraries which do a lot of the legwork. Both of libraries are fantastic and deserve a star!
 
 - [veewee/xml](https://github.com/veewee/xml) - Used for reading and decoding XML, but has a powerful writing engine of its own.
 - [spatie/array-to-xml](https://github.com/spatie/array-to-xml) - A brilliant library to convert an array into XML
