@@ -168,6 +168,8 @@ $values = $reader->values(); // Array of values.
 > Reading the whole XML document may consume a large amount of memory and stil requires diving into the array to get the values you need. You may find one of the methods below to search for a specific element even more useful.
 #### Reading Specific Values
 You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements.
+
+This method will return a single value if there is one element or an array of values if it has found multiple elements.
 ```php
 $reader = XmlReader::fromString('
     <?xml version="1.0" encoding="utf-8"?>
@@ -187,8 +189,6 @@ $reader->value('song'); // ['Luke Combs - When It Rains It Pours', 'Sam Ryder - 
 
 $reader->value('song.2'); // 'London Symfony Orchestra - Starfield Suite'
 ```
->**Note**
-> This method will return an `Element` DTO if there is one element or an array of elements if it has found multiple.
 #### Reading Specific Values via XPath
 You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query.
 ```php
@@ -202,6 +202,8 @@ $reader->xpathValue('//person/favourite-songs/song[3]'); //  Element('London Sym
 >XPath requires all the XML to be loaded in memory at once.
 #### Reading Specific Elements
 You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements.
+
+This method will return an `Element` DTO if there is one element or an array of elements if it has found multiple.
 ```php
 $reader = XmlReader::fromString('
     <?xml version="1.0" encoding="utf-8"?>
@@ -221,8 +223,6 @@ $reader->element('song'); // [Element('Luke Combs - When It Rains It Pours'), El
 
 $reader->element('song.2'); // Element('London Symfony Orchestra - Starfield Suite')
 ```
->**Note**
-> This method will return an `Element` DTO if there is one element or an array of elements if it has found multiple.
 #### Reading Specific Elements via XPath
 You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query.
 ```php
