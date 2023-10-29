@@ -8,13 +8,12 @@ use DOMXPath;
 use Exception;
 use DOMElement;
 use DOMDocument;
-use InvalidArgumentException;
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\ResponseInterface;
 use Saloon\Http\Response;
+use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
+use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
@@ -104,8 +103,6 @@ class XmlReader
     /**
      * Create a reader from a PSR response
      *
-     * @param \Psr\Http\Message\MessageInterface $response
-     * @return static
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      */
     public static function fromPsrResponse(MessageInterface $response): static
@@ -137,8 +134,6 @@ class XmlReader
     }
 
     /**
-     * @param \Saloon\Http\Response $response
-     * @return static
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      */
     public static function fromSaloonResponse(Response $response): static

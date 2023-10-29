@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use Saloon\XmlWrangler\XmlReader;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 use Saloon\XmlWrangler\Tests\Fixtures\Saloon\BreakfastMenuRequest;
-use Saloon\XmlWrangler\XmlReader;
 
 test('can parse xml and convert it into an array of elements', function () {
     $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
@@ -354,7 +354,7 @@ test('can parse xml from a stream', function () {
 test('can parse xml from a psr response', function () {
     $guzzle = new Client();
 
-    $response = $guzzle->send(new Request('GET','https://tests.saloon.dev/api/breakfast-menu'));
+    $response = $guzzle->send(new Request('GET', 'https://tests.saloon.dev/api/breakfast-menu'));
 
     $reader = XmlReader::fromPsrResponse($response);
 
