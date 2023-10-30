@@ -235,6 +235,10 @@ class XmlReader
         $results = [];
 
         foreach ($elements as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
             $decodedElement = element_decode($element);
             $firstKey = (string)array_key_first($decodedElement);
 
