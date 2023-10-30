@@ -16,6 +16,8 @@ test('can parse xml and convert it into an array of elements', function () {
 
     $reader = XmlReader::fromString($file);
 
+    dd($reader->element('breakfast_menu'));
+
     $belgianWaffles = Element::make([
         'name' => Element::make('Belgian Waffles'),
         'price' => Element::make('$5.95'),
