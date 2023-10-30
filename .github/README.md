@@ -139,11 +139,11 @@ The XML reader can accept a variety of input types to make your life easier. You
 ```php
 use Saloon\XmlWrangler\XmlReader;
 
-XmlReader::fromString('<?xml version="1.0" encoding="utf-8"?><breakfast_menu>...');
-XmlReader::fromFile('path/to/file.xml');
-XmlReader::fromStream(fopen('path/to/file.xml', 'rb');
-XmlReader::fromPsrResponse($response);
-XmlReader::fromSaloonResponse($response);
+$reader = XmlReader::fromString('<?xml version="1.0" encoding="utf-8"?><breakfast_menu>...');
+$reader = XmlReader::fromFile('path/to/file.xml');
+$reader = XmlReader::fromStream(fopen('path/to/file.xml', 'rb');
+$reader = XmlReader::fromPsrResponse($response);
+$reader = XmlReader::fromSaloonResponse($response);
 ```
 > **Warning**
 > Due to limitations of the underlying PHP XMLReader class, the `fromStream`, `fromPsrResponse` and `fromSaloon` methods will create a temporary file on your machine/server to read from which will be automatically removed
