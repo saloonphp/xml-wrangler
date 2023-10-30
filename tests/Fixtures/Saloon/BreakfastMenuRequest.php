@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Saloon\XmlWrangler\Tests\Fixtures\Saloon;
 
 use Saloon\Enums\Method;
