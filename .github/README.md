@@ -150,9 +150,17 @@ $reader = XmlReader::fromFile('path/to/file.xml');
 // From a resource/stream
 
 $reader = XmlReader::fromStream(fopen('path/to/file.xml', 'rb');
+
+// From a PSR response (Like Guzzle)
+
+$reader = XmlReader::fromPsrResponse($response);
+
+// From a Saloon response
+
+$reader = XmlReader::fromSaloonResponse($response);
 ```
 > **Warning**
-> Due to limitations of the underlying PHP XMLReader class, the `fromStream` method will create a temporary file on your machine/server to read from which will be automatically removed
+> Due to limitations of the underlying PHP XMLReader class, the `fromStream`, `fromPsrResponse` and `fromSaloon` methods will create a temporary file on your machine/server to read from which will be automatically removed
 > when the reader is destructed. You will need to ensure that you have enough storage on your machine to use this method.
 
 #### Converting Everything Into An Array

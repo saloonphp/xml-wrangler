@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 use Saloon\XmlWrangler\XmlReader;
+use Saloon\Http\Faking\MockClient;
+use Saloon\Http\Faking\MockResponse;
 use Saloon\XmlWrangler\Data\Element;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use Saloon\XmlWrangler\Tests\Fixtures\Saloon\BreakfastMenuRequest;
 
 test('can parse xml and convert it into an array of elements', function () {
     $file = file_get_contents('tests/Fixtures/breakfast-menu.xml');
@@ -333,6 +338,46 @@ test('if the file is unreadable it will throw an exception', function () {
 
 test('can parse xml from a stream', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
+
+    $food = $reader->value('breakfast_menu.food');
+
+    expect($food)->toBeArray();
+    expect($food)->toHaveCount(5);
+
+    // Let's test we can make multiple queries
+
+    $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+
+    expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
+});
+
+test('can parse xml from a psr response', function () {
+    $guzzle = new Client();
+
+    $response = $guzzle->send(new Request('GET', 'https://tests.saloon.dev/api/breakfast-menu'));
+
+    $reader = XmlReader::fromPsrResponse($response);
+
+    $food = $reader->value('breakfast_menu.food');
+
+    expect($food)->toBeArray();
+    expect($food)->toHaveCount(5);
+
+    // Let's test we can make multiple queries
+
+    $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+
+    expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
+});
+
+test('can parse xml from a saloon response', function () {
+    $mockClient = new MockClient([
+        MockResponse::fixture('breakfastMenu'),
+    ]);
+
+    $response = BreakfastMenuRequest::make()->withMockClient($mockClient)->send();
+
+    $reader = XmlReader::fromSaloonResponse($response);
 
     $food = $reader->value('breakfast_menu.food');
 

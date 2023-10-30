@@ -8,10 +8,12 @@ use DOMXPath;
 use Exception;
 use DOMElement;
 use DOMDocument;
+use Saloon\Http\Response;
 use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
+use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
@@ -96,6 +98,47 @@ class XmlReader
             reader: Reader::fromXmlFile(stream_get_meta_data($temporaryFile)['uri']),
             streamFile: $temporaryFile,
         );
+    }
+
+    /**
+     * Create a reader from a PSR response
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public static function fromPsrResponse(MessageInterface $response): static
+    {
+        $stream = $response->getBody();
+
+        if (! $stream->isReadable()) {
+            throw new XmlReaderException('Unable to read from the stream.');
+        }
+
+        $temporaryFile = tmpfile();
+
+        if ($temporaryFile === false) {
+            throw new XmlReaderException('Unable to create the temporary file.');
+        }
+
+        while (! $stream->eof()) {
+            if ($bytes = $stream->read(1024)) {
+                fwrite($temporaryFile, $bytes);
+            }
+        }
+
+        rewind($temporaryFile);
+
+        return new static(
+            reader: Reader::fromXmlFile(stream_get_meta_data($temporaryFile)['uri']),
+            streamFile: $temporaryFile,
+        );
+    }
+
+    /**
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     */
+    public static function fromSaloonResponse(Response $response): static
+    {
+        return static::fromPsrResponse($response->getPsrResponse());
     }
 
     /**
