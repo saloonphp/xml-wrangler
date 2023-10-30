@@ -10,6 +10,7 @@ use DOMElement;
 use DOMDocument;
 use Saloon\Http\Response;
 use InvalidArgumentException;
+use VeeWee\Xml\Dom\Document;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -220,24 +221,20 @@ class XmlReader
      */
     public function xpathElement(string $query, bool $nullable = false): Element|array|null
     {
-        $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
+        $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
 
-        $dom = new DOMDocument;
-        $dom->loadXML($xmlString);
+        $document = Document::fromXmlString($xml);
+        $xpath = $document->xpath();
 
-        $elements = (new DOMXPath($dom))->query($query);
+        $elements = $xpath->query($query);
 
-        if ($elements === false || $elements->count() === 0) {
+        if ($elements->count() === 0) {
             return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
         }
 
         $results = [];
 
         foreach ($elements as $element) {
-            if (! $element instanceof DOMElement) {
-                continue;
-            }
-
             $decodedElement = element_decode($element);
             $firstKey = (string)array_key_first($decodedElement);
 
