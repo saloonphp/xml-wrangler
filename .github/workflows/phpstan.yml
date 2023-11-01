@@ -3,7 +3,7 @@ name: PHPStan
 on:
   push:
     branches:
-      - 'main'
+      - 'v1'
   pull_request:
     branches:
       - '*'
