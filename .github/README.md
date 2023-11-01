@@ -158,7 +158,7 @@ $elements = $reader->elements(); // Array of `Element::class` DTOs
 
 $values = $reader->values(); // Array of values.
 ```
-> **Info**
+> **Note**
 > If you are reading a large XML file, you should use the `element` or `value` method with the `asGenerator` property. These methods can support huge XML files without running out of memory.
 
 #### Reading Specific Values
