@@ -16,8 +16,6 @@ test('can parse xml and convert it into an array of elements', function () {
 
     $reader = XmlReader::fromString($file);
 
-    dd($reader->element('breakfast_menu'));
-
     $belgianWaffles = Element::make([
         'name' => Element::make('Belgian Waffles'),
         'price' => Element::make('$5.95'),
@@ -152,7 +150,7 @@ test('it throws an exception if an element could not be found', function () {
     expect($reader->element('person', [], true))->toBeNull();
 
     $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find [person] element');
+    $this->expectExceptionMessage('Unable to find matches for [person]');
 
     $reader->element('person');
 });
@@ -165,7 +163,7 @@ test('it throws an exception if a value could not be found', function () {
     expect($reader->value('person', [], true))->toBeNull();
 
     $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find [person] element');
+    $this->expectExceptionMessage('Unable to find matches for [person]');
 
     $reader->value('person');
 });
@@ -175,7 +173,7 @@ test('can use dot notation to find a specific nested element', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $value = $reader->value('customers.customer.name');
+    $value = $reader->value('customer.name');
 
     expect($value)->toBe('Charter Group');
 });
@@ -185,7 +183,7 @@ test('when the elements have multiple an array is returned', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $food = $reader->value('breakfast_menu.food');
+    $food = $reader->value('food');
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
@@ -226,7 +224,7 @@ test('when the elements have multiple an array is returned', function () {
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $berryBerryBelgianWaffles = $reader->value('breakfast_menu.food.2');
+    $berryBerryBelgianWaffles = $reader->value('food.2');
 
     expect($berryBerryBelgianWaffles)->toEqual([
         'name' => 'Berry-Berry Belgian Waffles',
@@ -258,21 +256,19 @@ test('can search for an element and it will return every value', function () {
     expect($name)->toEqual('Berry-Berry Belgian Waffles');
 });
 
-test('when using dot notation it will throw exceptions if a value could not be found', function (string $search, string $message) {
+test('when using dot notation it will throw exceptions if a value could not be found', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
     $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find [' . $message . '] element');
+    $this->expectExceptionMessage('Unable to find matches for [food.6]');
 
-    $reader->element($search);
-})->with([
-    ['food.6', 'food'], ['1.1', '1'],
-]);
+    $reader->element('food.6');
+});
 
 test('can search for a nested element with specific attributes', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $soldOut = $reader->element('breakfast_menu.food', ['soldOut' => 'true']);
+    $soldOut = $reader->element('food', ['soldOut' => 'true']);
 
     expect($soldOut)->toBeInstanceOf(Element::class);
 
@@ -285,7 +281,7 @@ test('can search for a nested element with specific attributes', function () {
         ]),
     );
 
-    $bestSellers = $reader->element('breakfast_menu.food', ['bestSeller' => 'true']);
+    $bestSellers = $reader->element('food', ['bestSeller' => 'true']);
 
     expect($bestSellers)->toBeArray();
 
@@ -304,7 +300,7 @@ test('can search for a nested element with specific attributes', function () {
         ]),
     ]);
 
-    $notSoldOutNotBestSeller = $reader->element('breakfast_menu.food', ['soldOut' => 'false', 'bestSeller' => 'false']);
+    $notSoldOutNotBestSeller = $reader->element('food', ['soldOut' => 'false', 'bestSeller' => 'false']);
 
     expect($notSoldOutNotBestSeller)->toEqual([
         Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
@@ -325,7 +321,7 @@ test('can search for a nested element with specific attributes', function () {
 test('can parse xml from a file', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $food = $reader->value('breakfast_menu.food');
+    $food = $reader->value('food');
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
@@ -341,14 +337,14 @@ test('if the file is unreadable it will throw an exception', function () {
 test('can parse xml from a stream', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
 
-    $food = $reader->value('breakfast_menu.food');
+    $food = $reader->value('food');
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name');
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -360,14 +356,14 @@ test('can parse xml from a psr response', function () {
 
     $reader = XmlReader::fromPsrResponse($response);
 
-    $food = $reader->value('breakfast_menu.food');
+    $food = $reader->value('food');
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name');
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -381,14 +377,14 @@ test('can parse xml from a saloon response', function () {
 
     $reader = XmlReader::fromSaloonResponse($response);
 
-    $food = $reader->value('breakfast_menu.food');
+    $food = $reader->value('food');
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('breakfast_menu.food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name');
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -439,7 +435,7 @@ test('xpath method will throw an exception if search cannot be found', function 
 test('you can read cdata', function () {
     $reader = XmlReader::fromString(file_get_contents('tests/Fixtures/customers.xml'));
 
-    $address = $reader->value('customers.customer.address.2');
+    $address = $reader->value('customer.address.2');
 
     expect($address)->toEqual([
         'street' => '120 Ridge',
