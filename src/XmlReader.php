@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler;
 
-use DOMXPath;
-use Exception;
+use Generator;
+use Throwable;
 use DOMElement;
-use DOMDocument;
 use Saloon\Http\Response;
+use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
@@ -134,6 +134,10 @@ class XmlReader
     }
 
     /**
+     * Create a reader from a Saloon instance
+     *
+     * @see https://github.com/saloonphp/saloon
+     *
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      */
     public static function fromSaloonResponse(Response $response): static
@@ -144,70 +148,144 @@ class XmlReader
     /**
      * Get all elements
      *
-     * @return array<string, Element>
+     * @return array<string, Element>|Generator
+     * @throws \Throwable
      */
-    public function elements(): array
+    public function elements(bool $asGenerator = false): array|Generator
     {
-        $search = $this->reader->provide(Matcher\all());
+        try {
+            $results = $this->reader->provide(Matcher\document_element());
 
-        $results = iterator_to_array($search);
+            $results = function () use ($results): Generator {
+                foreach ($results as $result) {
+                    yield from $this->parseXml($result);
+                }
+            };
 
-        return array_map($this->parseXml(...), $results)[0];
+            return $asGenerator === true ? $results() : iterator_to_array($results());
+        } catch (Throwable $throwable) {
+            $this->__destruct();
+
+            throw $throwable;
+        }
     }
 
     /**
      * Find an element from the XML
      *
      * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @return \Saloon\XmlWrangler\Data\Element|Generator|array<string, Element>|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException|\Throwable
      */
-    public function element(string $name, array $withAttributes = [], bool $nullable = false): Element|array|null
+    public function element(string $name, array $withAttributes = [], bool $nullable = false, bool $asGenerator = false): Element|Generator|array|null
     {
         try {
-            $results = $this->searchRecursively($name, $nullable);
+            $searchTerms = explode('.', $name);
+            $lastSearchTermIndex = array_key_last($searchTerms);
 
-            // We'll parse each element in the results which will convert the XML into an
-            // Element class.
+            // We'll start by creating a matcher for each search term that has been provided.
 
-            $results = array_map($this->parseXml(...), $results);
+            $matchers = [];
 
-            // Flatten the array of results because the key will always be the last search term
-            // that we looked for.
+            foreach ($searchTerms as $index => $searchTerm) {
+                if (! is_numeric($searchTerm)) {
+                    $matchers[$index] = Matcher\element_name($searchTerm);
+                    continue;
+                }
 
-            $results = array_map(static function (array $element) {
-                return $element[array_key_first($element)];
-            }, $results);
+                // We won't continue if the last search term is numeric because
+                // we will apply this logic later in our code.
 
-            // Now, if there are any attributes defined we will refine our search for this.
+                if ($index === $lastSearchTermIndex) {
+                    continue;
+                }
+
+                // When the current search term is numeric, we need to look back at the previous
+                // matcher and join the position to the last matcher.
+
+                $previousMatcher = $matchers[$index - 1] ?? null;
+                $elementPositionMatcher = Matcher\element_position((int)$searchTerm + 1);
+
+                if (isset($previousMatcher)) {
+                    $matchers[$index - 1] = Matcher\all($previousMatcher, $elementPositionMatcher);
+                    continue;
+                }
+
+                $matchers[] = $elementPositionMatcher;
+            }
+
+            // When we have attributes, we have to search for the attributes on the very last element
+            // so we should find the last matcher and append the attribute search onto it.
 
             if (! empty($withAttributes)) {
-                $results = array_filter($results, static function (Element $element) use ($withAttributes) {
-                    $attributes = $element->getAttributes();
+                $attributeMatchers = [];
 
-                    foreach ($withAttributes as $key => $attribute) {
-                        if (($attributes[$key] ?? null) !== $attribute) {
-                            return false;
-                        }
+                foreach ($withAttributes as $attributeName => $attributeValue) {
+                    $attributeMatchers[] = Matcher\attribute_value($attributeName, $attributeValue);
+                }
+
+                $lastMatcherIndex = array_key_last($matchers);
+
+                $matchers[$lastMatcherIndex] = Matcher\all($matchers[$lastMatcherIndex], ...$attributeMatchers);
+            }
+
+            // If there is more than one matcher, then we should wrap the matchers in a sequence.
+            // This will mean that each matcher will only use the results from the previous
+            // matcher.
+
+            if (count($matchers) > 1) {
+                $matchers = [Matcher\sequence(...$matchers)];
+            }
+
+            $results = $this->reader->provide(
+                Matcher\nested(
+                    Matcher\document_element(),
+                    ...$matchers
+                ),
+            );
+
+            // Now we'll create our own generator around the generator provided by the results.
+            // This allows us to map and convert each XML element into our own element keeping
+            // memory usage low.
+
+            $lastSearchTerm = $searchTerms[$lastSearchTermIndex];
+            $isLastSearchTermNumeric = is_numeric($lastSearchTerm);
+
+            $results = function () use ($results, $nullable, $name, $lastSearchTerm, $isLastSearchTermNumeric): Generator {
+                $hasYieldedResult = false;
+
+                foreach ($results as $index => $result) {
+                    if ($isLastSearchTermNumeric && $index !== (int)$lastSearchTerm) {
+                        continue;
                     }
 
-                    return true;
-                });
+                    $element = $this->parseXml($result);
 
-                $results = array_values($results);
+                    yield $element[array_key_first($element)];
+
+                    $hasYieldedResult = true;
+                }
+
+                if ($hasYieldedResult === false && $nullable === false) {
+                    throw new XmlReaderException(sprintf('Unable to find matches for [%s]', $name));
+                }
+            };
+
+            if ($asGenerator === true) {
+                return $results();
             }
 
-            if (empty($results)) {
-                return $nullable ? null : throw new XmlReaderException('Unable to find element.');
-            }
+            $results = iterator_to_array($results());
 
-            // Return the results
+            if (empty($results) && $nullable === true) {
+                return null;
+            }
 
             return count($results) === 1 ? $results[0] : $results;
-        } catch (Exception $exception) {
+        } catch (Throwable $throwable) {
             $this->__destruct();
 
-            throw $exception;
+            throw $throwable;
         }
     }
 
@@ -216,67 +294,74 @@ class XmlReader
      *
      * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException|\Throwable
      */
     public function xpathElement(string $query, bool $nullable = false): Element|array|null
     {
-        $xmlString = iterator_to_array($this->reader->provide(Matcher\all()))[0];
+        try {
+            $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
 
-        $dom = new DOMDocument;
-        $dom->loadXML($xmlString);
+            $document = Document::fromXmlString($xml);
+            $xpath = $document->xpath();
 
-        $elements = (new DOMXPath($dom))->query($query);
+            $elements = $xpath->query($query);
 
-        if ($elements === false || $elements->count() === 0) {
-            return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
-        }
-
-        $results = [];
-
-        foreach ($elements as $element) {
-            if (! $element instanceof DOMElement) {
-                continue;
+            if ($elements->count() === 0) {
+                return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
             }
 
-            $decodedElement = element_decode($element);
-            $firstKey = (string)array_key_first($decodedElement);
+            $results = [];
 
-            $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
+            foreach ($elements as $element) {
+                if (! $element instanceof DOMElement) {
+                    continue;
+                }
+
+                $decodedElement = element_decode($element);
+                $firstKey = (string)array_key_first($decodedElement);
+
+                $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
+            }
+
+            $results = array_map(static function (array $element) {
+                return $element[array_key_first($element)];
+            }, $results);
+
+            return count($results) === 1 ? $results[0] : $results;
+        } catch (Throwable $throwable) {
+            $this->__destruct();
+
+            throw $throwable;
         }
-
-        $results = array_map(static function (array $element) {
-            return $element[array_key_first($element)];
-        }, $results);
-
-        return count($results) === 1 ? $results[0] : $results;
     }
 
     /**
      * Convert the XML into an array
      *
-     * @return array<string, mixed>
+     * @return array<string, mixed>|Generator
+     * @throws \Throwable
      */
-    public function values(): array
+    public function values(bool $asGenerator = false): array|Generator
     {
-        return $this->convertElementArrayIntoValues($this->elements());
+        return $this->convertElementArrayIntoValues($this->elements($asGenerator));
     }
 
     /**
      * Find and retrieve value of element
      *
      * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @return \Saloon\XmlWrangler\Data\Element|Generator|array<string, mixed>|string|null
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException|\Throwable
      */
-    public function value(string $name, array $withAttributes = [], bool $nullable = false): Element|array|string|null
+    public function value(string $name, array $withAttributes = [], bool $nullable = false, bool $asGenerator = false): Element|Generator|array|string|null
     {
-        $value = $this->element($name, $withAttributes, $nullable);
+        $value = $this->element($name, $withAttributes, $nullable, $asGenerator);
 
         if ($value instanceof Element) {
             $value = $value->getContent();
         }
 
-        if (! is_array($value)) {
+        if (! is_array($value) && ! $value instanceof Generator) {
             return $value;
         }
 
@@ -288,7 +373,7 @@ class XmlReader
      *
      * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException|\Throwable
      */
     public function xpathValue(string $name, bool $nullable = false): Element|array|string|null
     {
@@ -306,82 +391,24 @@ class XmlReader
     }
 
     /**
-     * Recursively search through elements
-     *
-     * This method only keeps one element in memory at a time.
-     *
-     * @return array<int, string>
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     */
-    protected function searchRecursively(string $query, bool $nullable, string $buffer = null): array
-    {
-        $searchTerms = explode('.', $query);
-
-        $reader = isset($buffer) ? Reader::fromXmlString($buffer) : $this->reader;
-
-        $searchTerm = $searchTerms[0];
-
-        $results = $reader->provide(
-            Matcher\node_name($searchTerm),
-        );
-
-        array_shift($searchTerms);
-
-        $onLastSearchTerm = empty($searchTerms);
-
-        $elements = [];
-
-        foreach ($results as $index => $result) {
-            if ($onLastSearchTerm === true) {
-                $elements[] = $result;
-                continue;
-            }
-
-            $nextSearchTerm = $searchTerms[0];
-            $nestedSearchTerms = $searchTerms;
-
-            if (is_numeric($nextSearchTerm)) {
-                $result = $index === (int)$nextSearchTerm ? $result : null;
-
-                array_shift($nestedSearchTerms);
-            }
-
-            if (is_null($result)) {
-                continue;
-            }
-
-            if (empty($nestedSearchTerms)) {
-                $elements[] = $result;
-                continue;
-            }
-
-            $elements = array_merge($elements, $this->searchRecursively(implode('.', $nestedSearchTerms), $nullable, $result));
-        }
-
-        if (empty($elements)) {
-            return $nullable ? [] : throw new XmlReaderException(sprintf('Unable to find [%s] element', $searchTerm));
-        }
-
-        return $elements;
-    }
-
-    /**
      * Recursively convert element array into values
      *
      * @param array<string, mixed> $elements
-     * @return array<string, mixed>
+     * @return array<string, mixed>|Generator
      */
-    protected function convertElementArrayIntoValues(array $elements): array
+    protected function convertElementArrayIntoValues(array|Generator $elements): array|Generator
     {
-        $values = [];
+        $fromArray = is_array($elements);
 
-        foreach ($elements as $key => $element) {
-            $value = $element->getContent();
+        $generator = function () use ($elements): Generator {
+            foreach ($elements as $key => $element) {
+                $value = $element->getContent();
 
-            $values[$key] = is_array($value) ? $this->convertElementArrayIntoValues($value) : $value;
-        }
+                yield $key => is_array($value) ? $this->convertElementArrayIntoValues($value) : $value;
+            }
+        };
 
-        return $values;
+        return $fromArray === true ? iterator_to_array($generator()) : $generator();
     }
 
     /**
