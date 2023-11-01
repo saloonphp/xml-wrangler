@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
+use LogicException;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
+use VeeWee\Xml\Reader\Node\NodeSequence;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -17,6 +19,7 @@ use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use function VeeWee\Xml\ErrorHandling\stop_on_first_issue;
 
 class XmlReader
 {
@@ -24,6 +27,11 @@ class XmlReader
      * XML Reader
      */
     protected Reader $reader;
+
+    /**
+     * Root element name
+     */
+    protected string $rootElementName;
 
     /**
      * Temporary File For Stream
@@ -45,6 +53,8 @@ class XmlReader
 
         $this->reader = $reader;
         $this->streamFile = $streamFile;
+
+        $this->loadRootElementName();
     }
 
     /**
@@ -181,6 +191,13 @@ class XmlReader
     {
         try {
             $searchTerms = explode('.', $name);
+
+            // Remove the root element name because we search underneath it
+
+            if ($searchTerms[0] === $this->rootElementName) {
+                array_shift($searchTerms);
+            }
+
             $lastSearchTermIndex = array_key_last($searchTerms);
 
             // We'll start by creating a matcher for each search term that has been provided.
@@ -476,6 +493,26 @@ class XmlReader
         if (isset($this->streamFile)) {
             fclose($this->streamFile);
             unset($this->streamFile);
+        }
+    }
+
+    /**
+     * Load the root element name of the document
+     *
+     * @return void
+     */
+    private function loadRootElementName(): void
+    {
+        try {
+            $this->reader->provide(
+                function (NodeSequence $nodeSequence) {
+                    $this->rootElementName = $nodeSequence->current()->name();
+
+                    throw new LogicException;
+                }
+            )->current();
+        } catch (LogicException) {
+            //
         }
     }
 }

@@ -178,7 +178,7 @@ $reader = XmlReader::fromString('
     </person>
 ');
 
-$reader->value('name') // 'Sammyjo20'
+$reader->value('person.name') // 'Sammyjo20'
 
 $reader->value('song'); // ['Luke Combs - When It Rains It Pours', 'Sam Ryder - SPACE MAN', ...]
 
