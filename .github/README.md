@@ -58,15 +58,15 @@ $reader->values(); // ['breakfast_menu' => [['name' => '...'], ['name' => '...']
 
 // Use dot-notation to find a specific element
 
-$reader->value('breakfast_menu.food.0'); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
+$reader->value('food.0'); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
 
 // Use the element method to get a simple Element DTO containing attributes and content
 
-$reader->element('breakfast_menu.food.0'); // Element::class
+$reader->element('food.0'); // Element::class
 
 // Use XPath to query the XML
 
-$reader->xpathValue('//breakfast_menu/food[@bestSeller="true"]/name'); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
+$reader->xpathValue('//food[@bestSeller="true"]/name'); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
 ```
 
 ## Writing XML
@@ -158,10 +158,25 @@ $elements = $reader->elements(); // Array of `Element::class` DTOs
 
 $values = $reader->values(); // Array of values.
 ```
->**Note**
-> Reading the whole XML document may consume a large amount of memory and stil requires diving into the array to get the values you need. You may find one of the methods below to search for a specific element even more useful.
+If you are reading a large XML file, you should use the `asGenerator` argument. This will return a generator which can be iterated over only keeping one element in memory at a time.
+```php
+$elements = $reader->elements(asGenerator: true);
+
+foreach ($elements as $element) {
+    // Only one element in memory...
+}
+
+//
+
+$values = $reader->values(asGenerator: true);
+
+foreach ($values as $value) {
+    // Only one value in memory...
+}
+```
+
 #### Reading Specific Values
-You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements.
+You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
 This method will return a single value if there is one element or an array of values if it has found multiple elements.
 ```php
@@ -193,9 +208,9 @@ $reader = XmlReader::fromString(...);
 $reader->xpathValue('//person/favourite-songs/song[3]'); //  Element('London Symfony Orchestra - Starfield Suite')
 ```
 >**Warning**
->XPath requires all the XML to be loaded in memory at once.
+>This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
 #### Reading Specific Elements
-You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements.
+You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
 This method will return an `Element` DTO if there is one element or an array of elements if it has found multiple.
 ```php
@@ -227,7 +242,23 @@ $reader = XmlReader::fromString(...);
 $reader->xpathElement('//person/favourite-songs/song[3]'); //  Element('London Symfony Orchestra - Starfield Suite')
 ```
 >**Warning**
->XPath requires all the XML to be loaded in memory at once.
+>This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
+#### Nullable Methods
+By default, the `element`, `xpathElement`, `value` and `xpathValue` methods will throw an exception if a given search string could find results. If you would like these to be nullable you can use the `nullable` argument.
+```php
+$name = $reader->element('name', nullable: true);
+```
+
+#### Using Generators
+When searching a large file, you can use the `asGenerator` argument which will always return a generator of results only keeping one item in memory at a time.
+```php
+$names = $reader->element('name', asGenerator: true);
+
+foreach ($names as $name) {
+    //
+}
+```
+
 ### Writing XML
 This section on the documentation is for using the XML writer.
 #### Basic Usage
