@@ -158,22 +158,8 @@ $elements = $reader->elements(); // Array of `Element::class` DTOs
 
 $values = $reader->values(); // Array of values.
 ```
-If you are reading a large XML file, you should use the `asGenerator` argument. This will return a generator which can be iterated over only keeping one element in memory at a time.
-```php
-$elements = $reader->elements(asGenerator: true);
-
-foreach ($elements as $element) {
-    // Only one element in memory...
-}
-
-//
-
-$values = $reader->values(asGenerator: true);
-
-foreach ($values as $value) {
-    // Only one value in memory...
-}
-```
+> **Info**
+> If you are reading a large XML file, you should use the `element` or `value` method with the `asGenerator` property. These methods can support huge XML files without running out of memory.
 
 #### Reading Specific Values
 You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
