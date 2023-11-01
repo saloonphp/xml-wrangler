@@ -181,6 +181,7 @@ class XmlReader
     {
         try {
             $searchTerms = explode('.', $name);
+            $lastSearchTermIndex = array_key_last($searchTerms);
 
             // We'll start by creating a matcher for each search term that has been provided.
 
@@ -189,6 +190,13 @@ class XmlReader
             foreach ($searchTerms as $index => $searchTerm) {
                 if (! is_numeric($searchTerm)) {
                     $matchers[$index] = Matcher\element_name($searchTerm);
+                    continue;
+                }
+
+                // We won't continue if the last search term is numeric because
+                // we will apply this logic later in our code.
+
+                if ($index === $lastSearchTermIndex) {
                     continue;
                 }
 
@@ -240,20 +248,23 @@ class XmlReader
             // This allows us to map and convert each XML element into our own element keeping
             // memory usage low.
 
-            $results = function () use ($results, $nullable, $name): Generator {
-                $hasYieldedResult = false;
-                $count = 0;
+            $lastSearchTerm = $searchTerms[$lastSearchTermIndex];
+            $isLastSearchTermNumeric = is_numeric($lastSearchTerm);
 
-                foreach ($results as $result) {
+            $results = function () use ($results, $nullable, $name, $lastSearchTerm, $isLastSearchTermNumeric): Generator {
+                $hasYieldedResult = false;
+
+                foreach ($results as $index => $result) {
                     $element = $this->parseXml($result);
+
+                    if ($isLastSearchTermNumeric && $index !== (int)$lastSearchTerm) {
+                        continue;
+                    }
 
                     yield $element[array_key_first($element)];
 
                     $hasYieldedResult = true;
-                    $count++;
                 }
-
-                dd($count);
 
                 if ($hasYieldedResult === false && $nullable === false) {
                     throw new XmlReaderException(sprintf('Unable to find matches for [%s]', $name));
@@ -269,10 +280,6 @@ class XmlReader
             if (empty($results) && $nullable === true) {
                 return null;
             }
-
-            // Todo: Check if the last digit is a number and the results contain more than one item we should only show the position
-
-            // Return the results
 
             return count($results) === 1 ? $results[0] : $results;
         } catch (Throwable $throwable) {
