@@ -255,11 +255,11 @@ class XmlReader
                 $hasYieldedResult = false;
 
                 foreach ($results as $index => $result) {
-                    $element = $this->parseXml($result);
-
                     if ($isLastSearchTermNumeric && $index !== (int)$lastSearchTerm) {
                         continue;
                     }
+
+                    $element = $this->parseXml($result);
 
                     yield $element[array_key_first($element)];
 

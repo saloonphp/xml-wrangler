@@ -61,7 +61,7 @@ test('can parse xml and convert it into an array of elements', function () {
         'soldOut' => 'false', 'bestSeller' => 'false',
     ]);
 
-    expect($reader->elements())->toEqual([
+    $result = [
         'breakfast_menu' => Element::make([
             'food' => new Element([
                 $belgianWaffles,
@@ -71,7 +71,17 @@ test('can parse xml and convert it into an array of elements', function () {
                 $homestyleBreakfast,
             ]),
         ])->addAttribute('name', 'Big G\'s Breakfasts'),
-    ]);
+    ];
+
+    expect($reader->elements())->toEqual($result);
+
+    // Test we can use generators
+
+    $generator = $reader->elements(true);
+
+    expect($generator)->toBeInstanceOf(Generator::class);
+
+    expect(iterator_to_array($generator))->toEqual($result);
 });
 
 test('can parse xml and convert it into an array of values', function () {
@@ -79,7 +89,7 @@ test('can parse xml and convert it into an array of values', function () {
 
     $reader = XmlReader::fromString($file);
 
-    expect($reader->values())->toEqual([
+    $result = [
         'breakfast_menu' => [
             'food' => [
                 [
@@ -114,7 +124,17 @@ test('can parse xml and convert it into an array of values', function () {
                 ],
             ],
         ],
-    ]);
+    ];
+
+    expect($reader->values())->toEqual($result);
+
+    // Test we can use generators
+
+    $generator = $reader->values(true);
+
+    expect($generator)->toBeInstanceOf(Generator::class);
+
+    expect(iterator_to_array($generator))->toEqual($result);
 });
 
 test('can parse xml and search for a specific element', function () {
@@ -128,6 +148,18 @@ test('can parse xml and search for a specific element', function () {
     expect($element->getAttributes())->toEqual(['id' => '55000']);
     expect($element->getContent())->toBeArray();
     expect($element->getContent())->toHaveCount(2);
+
+    // Test we can use a generator even if its a single value
+
+    $elementGenerator = $reader->element('customer', asGenerator: true);
+    $result = iterator_to_array($elementGenerator);
+
+    expect($result)->toBeArray();
+    expect($result)->toHaveCount(1);
+    expect($result[0])->toBeInstanceOf(Element::class);
+    expect($result[0]->getAttributes())->toEqual(['id' => '55000']);
+    expect($result[0]->getContent())->toBeArray();
+    expect($result[0]->getContent())->toHaveCount(2);
 });
 
 test('can parse xml and search for a specific value', function () {
@@ -185,9 +217,7 @@ test('when the elements have multiple an array is returned', function () {
 
     $food = $reader->value('food');
 
-    expect($food)->toBeArray();
-    expect($food)->toHaveCount(5);
-    expect($food)->toEqual([
+    $results = [
         [
             'name' => 'Belgian Waffles',
             'price' => '$5.95',
@@ -218,7 +248,19 @@ test('when the elements have multiple an array is returned', function () {
             'description' => 'Two eggs, bacon or sausage, toast, and our ever-popular hash browns',
             'calories' => '950',
         ],
-    ]);
+    ];
+
+    expect($food)->toBeArray();
+    expect($food)->toHaveCount(5);
+    expect($food)->toEqual($results);
+
+    // Test the generator
+
+    $foodGenerator = $reader->value('food', asGenerator: true);
+
+    expect($foodGenerator)->toBeInstanceOf(Generator::class);
+
+    expect(iterator_to_array($foodGenerator))->toEqual($results);
 });
 
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
