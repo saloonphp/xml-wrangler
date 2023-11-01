@@ -242,14 +242,18 @@ class XmlReader
 
             $results = function () use ($results, $nullable, $name): Generator {
                 $hasYieldedResult = false;
+                $count = 0;
 
                 foreach ($results as $result) {
-                    $hasYieldedResult = true;
-
                     $element = $this->parseXml($result);
 
                     yield $element[array_key_first($element)];
+
+                    $hasYieldedResult = true;
+                    $count++;
                 }
+
+                dd($count);
 
                 if ($hasYieldedResult === false && $nullable === false) {
                     throw new XmlReaderException(sprintf('Unable to find matches for [%s]', $name));
