@@ -5,21 +5,20 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
-use LogicException;
 use Throwable;
 use DOMElement;
+use LogicException;
 use Saloon\Http\Response;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
-use VeeWee\Xml\Reader\Node\NodeSequence;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
+use VeeWee\Xml\Reader\Node\NodeSequence;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
-use function VeeWee\Xml\ErrorHandling\stop_on_first_issue;
 
 class XmlReader
 {
@@ -498,8 +497,6 @@ class XmlReader
 
     /**
      * Load the root element name of the document
-     *
-     * @return void
      */
     private function loadRootElementName(): void
     {
