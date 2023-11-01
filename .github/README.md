@@ -135,7 +135,7 @@ The above code will create the following XML
 ### Reading XML
 This section on the documentation is for using the XML reader.
 #### Various Input Types Supported
-The XML reader can accept a variety of input types to make your life easier. You can use an XML string, file, or provide a resource. You can also read the XML directly from a PSR response (like Guzzle) or [Saloon](https://github.com/saloonphp/saloon) response.
+The XML reader can accept a variety of input types. You can use an XML string, file, or provide a resource. You can also read the XML directly from a PSR response (like Guzzle) or [Saloon](https://github.com/saloonphp/saloon) response.
 ```php
 use Saloon\XmlWrangler\XmlReader;
 
