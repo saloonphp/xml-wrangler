@@ -6,7 +6,6 @@ namespace Saloon\XmlWrangler;
 
 use Generator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\LazyCollection;
 use Saloon\XmlWrangler\Exceptions\MissingNodeException;
 use Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException;
 
@@ -32,16 +31,6 @@ class Query
     }
 
     /**
-     * Return the node as a generator
-     *
-     * Useful when reading very large XML files
-     */
-    public function lazy(): Generator
-    {
-        return $this->data;
-    }
-
-    /**
      * Return the node as an array
      *
      * @return array<string, mixed>
@@ -61,21 +50,6 @@ class Query
     public function collect(): Collection
     {
         return Collection::make($this->get());
-    }
-
-    /**
-     * Return the node as a lazy collection
-     *
-     * Useful when reading very large XML files
-     *
-     * Requires illuminate/support
-     *
-     * @return LazyCollection<int, mixed>
-     */
-    public function collectLazy(): LazyCollection
-    {
-        /** @phpstan-ignore-next-line */
-        return LazyCollection::make(fn () => yield from $this->data);
     }
 
     /**

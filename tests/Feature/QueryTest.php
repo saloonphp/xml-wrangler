@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\Query;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
@@ -25,7 +26,7 @@ test('can get all values as a collection', function () {
 });
 
 test('can iterate through values lazily', function () {
-    $node = new Query('test', multiValueGenerator());
+    $node = new LazyQuery('test', multiValueGenerator());
 
     $lazy = $node->lazy();
 
@@ -35,7 +36,7 @@ test('can iterate through values lazily', function () {
 });
 
 test('can iterate through values lazily with a collection', function () {
-    $node = new Query('test', multiValueGenerator());
+    $node = new LazyQuery('test', multiValueGenerator());
 
     $lazy = $node->collectLazy();
 

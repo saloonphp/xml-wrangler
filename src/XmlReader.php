@@ -187,7 +187,7 @@ class XmlReader
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function element(string $name, array $withAttributes = []): Query
+    public function element(string $name, array $withAttributes = []): LazyQuery
     {
         try {
             $searchTerms = explode('.', $name);
@@ -280,7 +280,7 @@ class XmlReader
                 }
             };
 
-            return new Query($name, $results());
+            return new LazyQuery($name, $results());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -344,11 +344,11 @@ class XmlReader
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      */
-    public function value(string $name, array $withAttributes = []): Query
+    public function value(string $name, array $withAttributes = []): LazyQuery
     {
         $node = $this->element($name, $withAttributes)->lazy();
 
-        return new Query($name, $this->convertElementArrayIntoValues($node));
+        return new LazyQuery($name, $this->convertElementArrayIntoValues($node));
     }
 
     /**
@@ -360,9 +360,11 @@ class XmlReader
      */
     public function xpathValue(string $query): Query
     {
-        $node = $this->xpathElement($query)->lazy();
+        $generator = function () use ($query) {
+            yield from $this->xpathElement($query)->get();
+        };
 
-        return new Query($query, $this->convertElementArrayIntoValues($node));
+        return new Query($query, $this->convertElementArrayIntoValues($generator()));
     }
 
     /**
