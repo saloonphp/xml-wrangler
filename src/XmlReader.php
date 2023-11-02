@@ -187,7 +187,7 @@ class XmlReader
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function element(string $name, array $withAttributes = []): Node
+    public function element(string $name, array $withAttributes = []): Query
     {
         try {
             $searchTerms = explode('.', $name);
@@ -280,7 +280,7 @@ class XmlReader
                 }
             };
 
-            return new Node($name, $results());
+            return new Query($name, $results());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -294,7 +294,7 @@ class XmlReader
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathElement(string $query): Node
+    public function xpathElement(string $query): Query
     {
         try {
             $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
@@ -318,7 +318,7 @@ class XmlReader
                 }
             };
 
-            return new Node($query, $generator());
+            return new Query($query, $generator());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -330,6 +330,7 @@ class XmlReader
      * Convert the XML into an array
      *
      * @throws \Throwable
+     * @return array<string, mixed>
      */
     public function values(): array
     {
@@ -343,11 +344,11 @@ class XmlReader
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      */
-    public function value(string $name, array $withAttributes = []): Node
+    public function value(string $name, array $withAttributes = []): Query
     {
         $node = $this->element($name, $withAttributes)->lazy();
 
-        return new Node($name, $this->convertElementArrayIntoValues($node));
+        return new Query($name, $this->convertElementArrayIntoValues($node));
     }
 
     /**
@@ -357,11 +358,11 @@ class XmlReader
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathValue(string $query): Node
+    public function xpathValue(string $query): Query
     {
         $node = $this->xpathElement($query)->lazy();
 
-        return new Node($query, $this->convertElementArrayIntoValues($node));
+        return new Query($query, $this->convertElementArrayIntoValues($node));
     }
 
     /**

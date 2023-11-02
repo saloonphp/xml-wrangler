@@ -7,10 +7,10 @@ namespace Saloon\XmlWrangler;
 use Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
-use Saloon\XmlWrangler\Exceptions\NodeMissingException;
+use Saloon\XmlWrangler\Exceptions\MissingNodeException;
 use Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException;
 
-class Node
+class Query
 {
     /**
      * The search term used for the node
@@ -44,7 +44,7 @@ class Node
     /**
      * Return the node as an array
      *
-     * @return array<int, mixed>
+     * @return array<string, mixed>
      */
     public function get(): array
     {
@@ -55,6 +55,8 @@ class Node
      * Return the node as a collection
      *
      * Requires illuminate/support
+     *
+     * @return Collection<string, mixed>
      */
     public function collect(): Collection
     {
@@ -67,9 +69,12 @@ class Node
      * Useful when reading very large XML files
      *
      * Requires illuminate/support
+     *
+     * @return LazyCollection<int, mixed>
      */
-    public function lazyCollect(): LazyCollection
+    public function collectLazy(): LazyCollection
     {
+        /** @phpstan-ignore-next-line */
         return LazyCollection::make(fn () => yield from $this->data);
     }
 
@@ -88,11 +93,11 @@ class Node
     /**
      * Retrieve the first value in the node or fail
      *
-     * @throws \Saloon\XmlWrangler\Exceptions\NodeMissingException
+     * @throws \Saloon\XmlWrangler\Exceptions\MissingNodeException
      */
     public function firstOrFail(): mixed
     {
-        return $this->first() ?? throw new NodeMissingException($this->searchTerm);
+        return $this->first() ?? throw new MissingNodeException($this->searchTerm);
     }
 
     /**
@@ -101,7 +106,7 @@ class Node
      * Throws an exception if none exist or more than one exists.
      *
      * @return string|null
-     * @throws \Saloon\XmlWrangler\Exceptions\NodeMissingException
+     * @throws \Saloon\XmlWrangler\Exceptions\MissingNodeException
      * @throws \Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException
      */
     public function sole(): mixed
@@ -120,7 +125,7 @@ class Node
         }
 
         if (is_null($result)) {
-            throw new NodeMissingException($this->searchTerm);
+            throw new MissingNodeException($this->searchTerm);
         }
 
         return $result;

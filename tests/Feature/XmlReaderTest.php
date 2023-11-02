@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
-use Saloon\XmlWrangler\Node;
+use Saloon\XmlWrangler\Query;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
@@ -366,7 +366,7 @@ test('can use xpath to find an element', function () {
 
     $bestSellers = $reader->xpathValue('/breakfast_menu/food[@bestSeller="true"]');
 
-    expect($bestSellers)->toBeInstanceOf(Node::class);
+    expect($bestSellers)->toBeInstanceOf(Query::class);
 
     expect($bestSellers->get())->toEqual([
         [
