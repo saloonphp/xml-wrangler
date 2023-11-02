@@ -5,21 +5,10 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 
 class LazyQuery extends Query
 {
-    /**
-     * The search term used for the node
-     */
-    protected string $searchTerm;
-
-    /**
-     * Data source of the node
-     */
-    protected Generator $data;
-
     /**
      * Return the node as a generator
      *
