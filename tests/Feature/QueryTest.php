@@ -7,6 +7,7 @@ use Saloon\XmlWrangler\LazyQuery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use Saloon\XmlWrangler\Exceptions\MissingNodeException;
+use Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException;
 use Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException;
 
 test('can view all values in a node', function () {
@@ -83,3 +84,16 @@ test('sole throws an exception if there are multiple items', function () {
 
     $node->sole();
 });
+
+test('it will throw an exception if you attempt to use one of the methods on the query after is is read', function (string $method) {
+    $node = new LazyQuery('test', multiValueGenerator());
+
+    $node->get();
+
+    $this->expectException(QueryAlreadyReadException::class);
+    $this->expectExceptionMessage('The underlying generator on this query instance has already been used.');
+
+    $node->$method();
+})->with([
+    'lazy', 'collectLazy', 'get', 'collect', 'first', 'firstOrFail', 'sole',
+]);

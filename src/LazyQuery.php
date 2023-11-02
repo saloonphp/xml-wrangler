@@ -13,9 +13,13 @@ class LazyQuery extends Query
      * Return the node as a generator
      *
      * Useful when reading very large XML files
+     *
+     * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function lazy(): Generator
     {
+        $this->throwOnInvalidGenerator();
+
         return $this->data;
     }
 
@@ -27,9 +31,12 @@ class LazyQuery extends Query
      * Requires illuminate/support
      *
      * @return LazyCollection<int, mixed>
+     * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function collectLazy(): LazyCollection
     {
+        $this->throwOnInvalidGenerator();
+
         /** @phpstan-ignore-next-line */
         return LazyCollection::make(fn () => yield from $this->data);
     }
