@@ -249,6 +249,7 @@ This section on the documentation is for using the XML writer.
 #### Basic Usage
 #### Using the Element DTO
 #### Arrays Of Values
+#### Customising the root element
 #### CDATA Element
 #### Composable Elements
 Sometimes you might have a part of XML that you will reuse across multiple XML requests in your application. With XML Wrangler, you can create "composable" elements
