@@ -41,11 +41,6 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function singleValueGenerator(): Generator
-{
-    return yield from ['a'];
-}
-
 function multiValueGenerator(): Generator
 {
     return yield from ['a', 'b', 'c', 'd', 'e'];
