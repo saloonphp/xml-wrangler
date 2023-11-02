@@ -4,9 +4,7 @@
 
 </div>
 
-XML Wrangler is a minimalist PHP library designed to make reading and writing XML easy. XML Wrangler has been built with developer experience in mind - you can read any type of XML file, even with complex namespaces and even large XML files. It will also throw exceptions if the XML is invalid!
-
-You can use the table of contents button in the top left to find a section quickly.
+XML Wrangler is a simplistic PHP library designed to make reading and writing XML easy. XML Wrangler has been built with developer experience in mind - you can read any type of XML file, even with complex namespaces and even large XML files. It will also throw exceptions if the XML is invalid!
 
 ## Installation
 XML Wrangler is installed via Composer.
@@ -14,14 +12,13 @@ XML Wrangler is installed via Composer.
 ```
 composer require saloonphp/xml-wrangler
 ```
-> Supports PHP 8.1+
+> Requires PHP 8.1+
 
 ## Reading XML
-Reading XML can be done by simply passing the XML string or file into the XML reader and using one of the many methods to search and find a specific element. 
-You can also convert every element into an easily traversable array. If you need to access attributes on an element you can use
-the `Element` DTO which is a simple class to access the content and attributes. *No more dealing with clunky DOMElement classes!*
-
-The `value` and `element` methods use a memory efficient search too so it can handle large XML files.
+Reading XML can be done by passing the XML string or file into the XML reader and using one of the many methods to search and find a specific element or value. 
+You can also convert every element into an easily traversable array if you prefer. If you need to access attributes on an element you can use
+the `Element` DTO which is a simple class to access the content and attributes. XML Wrangler provides methods to iterate through multiple elements while only
+keeping one element in memory at a time.
 
 ```xml
 <breakfast_menu>
@@ -58,15 +55,15 @@ $reader->values(); // ['breakfast_menu' => [['name' => '...'], ['name' => '...']
 
 // Use dot-notation to find a specific element
 
-$reader->value('food.0'); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
+$reader->value('food.0')->sole(); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
 
 // Use the element method to get a simple Element DTO containing attributes and content
 
-$reader->element('food.0'); // Element::class
+$reader->element('food.0')->sole(); // Element::class
 
 // Use XPath to query the XML
 
-$reader->xpathValue('//food[@bestSeller="true"]/name'); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
+$reader->xpathValue('//food[@bestSeller="true"]/name')->get(); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
 ```
 
 ## Writing XML
@@ -135,7 +132,7 @@ The above code will create the following XML
 ### Reading XML
 This section on the documentation is for using the XML reader.
 #### Various Input Types Supported
-The XML reader can accept a variety of input types. You can use an XML string, file, or provide a resource. You can also read the XML directly from a PSR response (like Guzzle) or [Saloon](https://github.com/saloonphp/saloon) response.
+The XML reader can accept a variety of input types. You can use an XML string, file, or provide a resource. You can also read the XML directly from a PSR response (like from [Guzzle](https://github.com/guzzle/guzzle)) or a [Saloon](https://github.com/saloonphp/saloon) response.
 ```php
 use Saloon\XmlWrangler\XmlReader;
 
@@ -159,12 +156,12 @@ $elements = $reader->elements(); // Array of `Element::class` DTOs
 $values = $reader->values(); // Array of values.
 ```
 > **Note**
-> If you are reading a large XML file, you should use the `element` or `value` method with the `asGenerator` property. These methods can support huge XML files without running out of memory.
+> If you are reading a large XML file, you should use the `element` or `value` methods instead. These methods can iterate through large XML files without running out of memory.
 
 #### Reading Specific Values
-You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
+You can use the `value` method to get a specific element's value. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory-efficient way.
 
-This method will return a single value if there is one element or an array of values if it has found multiple elements.
+This method will return a `LazyQuery` class which has different methods on to retrieve the data.
 ```php
 $reader = XmlReader::fromString('
     <?xml version="1.0" encoding="utf-8"?>
@@ -178,11 +175,11 @@ $reader = XmlReader::fromString('
     </person>
 ');
 
-$reader->value('person.name') // 'Sammyjo20'
+$reader->value('person.name')->sole() // 'Sammyjo20'
 
-$reader->value('song'); // ['Luke Combs - When It Rains It Pours', 'Sam Ryder - SPACE MAN', ...]
+$reader->value('song')->get(); // ['Luke Combs - When It Rains It Pours', 'Sam Ryder - SPACE MAN', ...]
 
-$reader->value('song.2'); // 'London Symfony Orchestra - Starfield Suite'
+$reader->value('song.2')->sole(); // 'London Symfony Orchestra - Starfield Suite'
 ```
 #### Reading Specific Values via XPath
 You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query.
@@ -191,7 +188,7 @@ You can use the `xpathValue` method to find a specific element's value with an [
 
 $reader = XmlReader::fromString(...);
 
-$reader->xpathValue('//person/favourite-songs/song[3]'); //  Element('London Symfony Orchestra - Starfield Suite')
+$reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
 ```
 >**Warning**
 >This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
@@ -235,7 +232,7 @@ By default, the `element`, `xpathElement`, `value` and `xpathValue` methods will
 $name = $reader->element('name', nullable: true);
 ```
 
-#### Using Generators
+#### Lazily Iterating
 When searching a large file, you can use the `asGenerator` argument which will always return a generator of results only keeping one item in memory at a time.
 ```php
 $names = $reader->element('name', asGenerator: true);
@@ -244,6 +241,7 @@ foreach ($names as $name) {
     //
 }
 ```
+#### Using Laravel Collections
 
 ### Writing XML
 This section on the documentation is for using the XML writer.
