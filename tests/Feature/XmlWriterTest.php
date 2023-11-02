@@ -219,12 +219,3 @@ test('you can read xml and pass it into the writer and it is exactly the same', 
 
     expect($xml)->toEqual(file_get_contents('tests/Fixtures/breakfast-menu.xml'));
 });
-
-test('wip', function () {
-    $writer = new XmlWriter();
-    $writer->addProcessingInstruction('xml-stylesheet', 'type="text/xsl" href="base.xsl"');
-
-    $xml = $writer->write('root', ['name' => 'Sam']);
-
-    dd($xml);
-});
