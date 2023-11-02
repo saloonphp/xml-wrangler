@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use Saloon\XmlWrangler\Query;
+use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
@@ -74,14 +76,6 @@ test('can parse xml and convert it into an array of elements', function () {
     ];
 
     expect($reader->elements())->toEqual($result);
-
-    // Test we can use generators
-
-    $generator = $reader->elements(true);
-
-    expect($generator)->toBeInstanceOf(Generator::class);
-
-    expect(iterator_to_array($generator))->toEqual($result);
 });
 
 test('can parse xml and convert it into an array of values', function () {
@@ -127,14 +121,6 @@ test('can parse xml and convert it into an array of values', function () {
     ];
 
     expect($reader->values())->toEqual($result);
-
-    // Test we can use generators
-
-    $generator = $reader->values(true);
-
-    expect($generator)->toBeInstanceOf(Generator::class);
-
-    expect(iterator_to_array($generator))->toEqual($result);
 });
 
 test('can parse xml and search for a specific element', function () {
@@ -142,24 +128,16 @@ test('can parse xml and search for a specific element', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $element = $reader->element('customer');
+    $query = $reader->element('customer');
+
+    expect($query)->toBeInstanceOf(LazyQuery::class);
+
+    $element = $query->sole();
 
     expect($element)->toBeInstanceOf(Element::class);
     expect($element->getAttributes())->toEqual(['id' => '55000']);
     expect($element->getContent())->toBeArray();
     expect($element->getContent())->toHaveCount(2);
-
-    // Test we can use a generator even if its a single value
-
-    $elementGenerator = $reader->element('customer', asGenerator: true);
-    $result = iterator_to_array($elementGenerator);
-
-    expect($result)->toBeArray();
-    expect($result)->toHaveCount(1);
-    expect($result[0])->toBeInstanceOf(Element::class);
-    expect($result[0]->getAttributes())->toEqual(['id' => '55000']);
-    expect($result[0]->getContent())->toBeArray();
-    expect($result[0]->getContent())->toHaveCount(2);
 });
 
 test('can parse xml and search for a specific value', function () {
@@ -167,37 +145,15 @@ test('can parse xml and search for a specific value', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $value = $reader->value('customer');
+    $query = $reader->value('customer');
+
+    expect($query)->toBeInstanceOf(LazyQuery::class);
+
+    $value = $query->sole();
 
     expect($value)->toBeArray();
     expect($value)->toHaveCount(2);
     expect($value)->toHaveKeys(['name', 'address']);
-});
-
-test('it throws an exception if an element could not be found', function () {
-    $file = file_get_contents('tests/Fixtures/customers.xml');
-
-    $reader = XmlReader::fromString($file);
-
-    expect($reader->element('person', [], true))->toBeNull();
-
-    $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find matches for [person]');
-
-    $reader->element('person');
-});
-
-test('it throws an exception if a value could not be found', function () {
-    $file = file_get_contents('tests/Fixtures/customers.xml');
-
-    $reader = XmlReader::fromString($file);
-
-    expect($reader->value('person', [], true))->toBeNull();
-
-    $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find matches for [person]');
-
-    $reader->value('person');
 });
 
 test('can use dot notation to find a specific nested element', function () {
@@ -205,7 +161,7 @@ test('can use dot notation to find a specific nested element', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $value = $reader->value('customer.name');
+    $value = $reader->value('customer.name')->sole();
 
     expect($value)->toBe('Charter Group');
 });
@@ -215,7 +171,7 @@ test('when the elements have multiple an array is returned', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $food = $reader->value('food');
+    $food = $reader->value('food')->get();
 
     $results = [
         [
@@ -253,20 +209,12 @@ test('when the elements have multiple an array is returned', function () {
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
     expect($food)->toEqual($results);
-
-    // Test the generator
-
-    $foodGenerator = $reader->value('food', asGenerator: true);
-
-    expect($foodGenerator)->toBeInstanceOf(Generator::class);
-
-    expect(iterator_to_array($foodGenerator))->toEqual($results);
 });
 
 test('can use numbers to find a specific index of a nested element with dot notation', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $berryBerryBelgianWaffles = $reader->value('food.2');
+    $berryBerryBelgianWaffles = $reader->value('food.2')->sole();
 
     expect($berryBerryBelgianWaffles)->toEqual([
         'name' => 'Berry-Berry Belgian Waffles',
@@ -275,7 +223,7 @@ test('can use numbers to find a specific index of a nested element with dot nota
         'calories' => '900',
     ]);
 
-    $name = $reader->value('food.2.name');
+    $name = $reader->value('food.2.name')->sole();
 
     expect($name)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -283,7 +231,7 @@ test('can use numbers to find a specific index of a nested element with dot nota
 test('can search for an element and it will return every value', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $names = $reader->value('name');
+    $names = $reader->value('name')->get();
 
     expect($names)->toEqual([
         'Belgian Waffles',
@@ -293,24 +241,15 @@ test('can search for an element and it will return every value', function () {
         'Homestyle Breakfast',
     ]);
 
-    $name = $reader->value('name.2');
+    $name = $reader->value('name.2')->sole();
 
     expect($name)->toEqual('Berry-Berry Belgian Waffles');
-});
-
-test('when using dot notation it will throw exceptions if a value could not be found', function () {
-    $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
-
-    $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('Unable to find matches for [food.6]');
-
-    $reader->element('food.6');
 });
 
 test('can search for a nested element with specific attributes', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $soldOut = $reader->element('food', ['soldOut' => 'true']);
+    $soldOut = $reader->element('food', ['soldOut' => 'true'])->sole();
 
     expect($soldOut)->toBeInstanceOf(Element::class);
 
@@ -323,7 +262,7 @@ test('can search for a nested element with specific attributes', function () {
         ]),
     );
 
-    $bestSellers = $reader->element('food', ['bestSeller' => 'true']);
+    $bestSellers = $reader->element('food', ['bestSeller' => 'true'])->get();
 
     expect($bestSellers)->toBeArray();
 
@@ -342,7 +281,7 @@ test('can search for a nested element with specific attributes', function () {
         ]),
     ]);
 
-    $notSoldOutNotBestSeller = $reader->element('food', ['soldOut' => 'false', 'bestSeller' => 'false']);
+    $notSoldOutNotBestSeller = $reader->element('food', ['soldOut' => 'false', 'bestSeller' => 'false'])->get();
 
     expect($notSoldOutNotBestSeller)->toEqual([
         Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
@@ -363,7 +302,7 @@ test('can search for a nested element with specific attributes', function () {
 test('can parse xml from a file', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    $food = $reader->value('food');
+    $food = $reader->value('food')->get();
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
@@ -379,14 +318,14 @@ test('if the file is unreadable it will throw an exception', function () {
 test('can parse xml from a stream', function () {
     $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
 
-    $food = $reader->value('food');
+    $food = $reader->value('food')->get();
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name')->sole();
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -398,14 +337,14 @@ test('can parse xml from a psr response', function () {
 
     $reader = XmlReader::fromPsrResponse($response);
 
-    $food = $reader->value('food');
+    $food = $reader->value('food')->get();
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name')->sole();
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -419,14 +358,14 @@ test('can parse xml from a saloon response', function () {
 
     $reader = XmlReader::fromSaloonResponse($response);
 
-    $food = $reader->value('food');
+    $food = $reader->value('food')->get();
 
     expect($food)->toBeArray();
     expect($food)->toHaveCount(5);
 
     // Let's test we can make multiple queries
 
-    $berryBerryWaffles = $reader->value('food.2.name');
+    $berryBerryWaffles = $reader->value('food.2.name')->sole();
 
     expect($berryBerryWaffles)->toEqual('Berry-Berry Belgian Waffles');
 });
@@ -436,7 +375,10 @@ test('can use xpath to find an element', function () {
 
     $bestSellers = $reader->xpathValue('/breakfast_menu/food[@bestSeller="true"]');
 
-    expect($bestSellers)->toEqual([
+    expect($bestSellers)->toBeInstanceOf(Query::class);
+    expect($bestSellers)->not->toBeInstanceOf(LazyQuery::class);
+
+    expect($bestSellers->get())->toEqual([
         [
             'name' => 'Belgian Waffles',
             'price' => '$5.95',
@@ -455,7 +397,10 @@ test('can use xpath to find an element', function () {
 
     $berryBerryWaffles = $reader->xpathElement('/breakfast_menu/food[3]');
 
-    expect($berryBerryWaffles)->toEqual(
+    expect($berryBerryWaffles)->toBeInstanceOf(Query::class);
+    expect($berryBerryWaffles)->not->toBeInstanceOf(LazyQuery::class);
+
+    expect($berryBerryWaffles->sole())->toEqual(
         Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
             'name' => Element::make('Berry-Berry Belgian Waffles'),
             'price' => Element::make('$8.95'),
@@ -465,19 +410,10 @@ test('can use xpath to find an element', function () {
     );
 });
 
-test('xpath method will throw an exception if search cannot be found', function () {
-    $reader = XmlReader::fromStream(fopen('tests/Fixtures/breakfast-menu.xml', 'rb'));
-
-    $this->expectException(XmlReaderException::class);
-    $this->expectExceptionMessage('No results found for [/breakfast_menu/food[@tasty="true"]].');
-
-    $reader->xpathValue('/breakfast_menu/food[@tasty="true"]');
-});
-
 test('you can read cdata', function () {
     $reader = XmlReader::fromString(file_get_contents('tests/Fixtures/customers.xml'));
 
-    $address = $reader->value('customer.address.2');
+    $address = $reader->value('customer.address.2')->sole();
 
     expect($address)->toEqual([
         'street' => '120 Ridge',
@@ -498,7 +434,7 @@ test('when an element has attributes and text content it will still be converted
 test('the root element name is discarded', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    expect($reader->value('breakfast_menu.name.0'))->toBe('Belgian Waffles');
+    expect($reader->value('breakfast_menu.name.0')->sole())->toBe('Belgian Waffles');
 });
 
 test('can test large xml files', function () {
@@ -506,7 +442,7 @@ test('can test large xml files', function () {
 
     $reader = XmlReader::fromFile($file);
 
-    $values = $reader->value('refinfo', asGenerator: true);
+    $values = $reader->value('refinfo')->lazy();
 
     foreach ($values as $value) {
         dd($value);

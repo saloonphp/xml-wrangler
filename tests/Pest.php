@@ -40,3 +40,13 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+function multiValueGenerator(): Generator
+{
+    return yield from ['a', 'b', 'c', 'd', 'e'];
+}
+
+function emptyGenerator(): Generator
+{
+    return yield from [];
+}
