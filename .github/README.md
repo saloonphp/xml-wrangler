@@ -182,7 +182,7 @@ $reader->value('song')->get(); // ['Luke Combs - When It Rains It Pours', 'Sam R
 $reader->value('song.2')->sole(); // 'London Symfony Orchestra - Starfield Suite'
 ```
 #### Reading Specific Values via XPath
-You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query.
+You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
 ```php
 <?php
 
@@ -195,7 +195,7 @@ $reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Sym
 #### Reading Specific Elements
 You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
-This method will return an `Element` DTO if there is one element or an array of elements if it has found multiple.
+This method will return a `LazyQuery` class which has different methods to retrieve the data.
 ```php
 $reader = XmlReader::fromString('
     <?xml version="1.0" encoding="utf-8"?>
@@ -209,39 +209,40 @@ $reader = XmlReader::fromString('
     </person>
 ');
 
-$reader->element('name') // Element('Sammyjo20')
+$reader->element('name')->sole(); // Element('Sammyjo20')
 
-$reader->element('song'); // [Element('Luke Combs - When It Rains It Pours'), Element('Sam Ryder - SPACE MAN'), ...]
+$reader->element('song')->get(); // [Element('Luke Combs - When It Rains It Pours'), Element('Sam Ryder - SPACE MAN'), ...]
 
-$reader->element('song.2'); // Element('London Symfony Orchestra - Starfield Suite')
+$reader->element('song.2')->sole(); // Element('London Symfony Orchestra - Starfield Suite')
 ```
 #### Reading Specific Elements via XPath
-You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query.
+You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
 ```php
 <?php
 
 $reader = XmlReader::fromString(...);
 
-$reader->xpathElement('//person/favourite-songs/song[3]'); //  Element('London Symfony Orchestra - Starfield Suite')
+$reader->xpathElement('//person/favourite-songs/song[3]')->sole(); //  Element('London Symfony Orchestra - Starfield Suite')
 ```
 >**Warning**
 >This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
-#### Nullable Methods
-By default, the `element`, `xpathElement`, `value` and `xpathValue` methods will throw an exception if a given search string could find results. If you would like these to be nullable you can use the `nullable` argument.
-```php
-$name = $reader->element('name', nullable: true);
-```
 
 #### Lazily Iterating
-When searching a large file, you can use the `asGenerator` argument which will always return a generator of results only keeping one item in memory at a time.
+When searching a large file, you can use the `lazy` or `collectLazy` methods which will return a generator of results only keeping one item in memory at a time.
 ```php
-$names = $reader->element('name', asGenerator: true);
+$names = $reader->element('name')->lazy();
 
 foreach ($names as $name) {
     //
 }
 ```
 #### Using Laravel Collections
+If you are using Laravel, you can use the `collect` and `collectLazy` methods which will convert the elements into a Laravel Collection/Lazy Collection. If you are not using Laravel, you can install the `illuminate/collections` package via Composer to add this functionality.
+```php
+$names = $reader->value('name')->collect();
+
+$names = $reader->value('name')->collectLazy();
+```
 
 ### Writing XML
 This section on the documentation is for using the XML writer.
