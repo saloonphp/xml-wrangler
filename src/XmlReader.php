@@ -157,10 +157,10 @@ class XmlReader
     /**
      * Get all elements
      *
-     * @return array<string, Element>|Generator
+     * @return array<string, Element>
      * @throws \Throwable
      */
-    public function elements(bool $asGenerator = false): array|Generator
+    public function elements(): array
     {
         try {
             $results = $this->reader->provide(Matcher\document_element());
@@ -171,7 +171,7 @@ class XmlReader
                 }
             };
 
-            return $asGenerator === true ? $results() : iterator_to_array($results());
+            return iterator_to_array($results());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -183,10 +183,11 @@ class XmlReader
      * Find an element from the XML
      *
      * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|Generator|array<string, Element>|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException|\Throwable
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \Throwable
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function element(string $name, array $withAttributes = [], bool $nullable = false, bool $asGenerator = false): Element|Generator|array|null
+    public function element(string $name, array $withAttributes = []): Node
     {
         try {
             $searchTerms = explode('.', $name);
@@ -267,9 +268,7 @@ class XmlReader
             $lastSearchTerm = $searchTerms[$lastSearchTermIndex];
             $isLastSearchTermNumeric = is_numeric($lastSearchTerm);
 
-            $results = function () use ($results, $nullable, $name, $lastSearchTerm, $isLastSearchTermNumeric): Generator {
-                $hasYieldedResult = false;
-
+            $results = function () use ($results, $lastSearchTerm, $isLastSearchTermNumeric): Generator {
                 foreach ($results as $index => $result) {
                     if ($isLastSearchTermNumeric && $index !== (int)$lastSearchTerm) {
                         continue;
@@ -278,26 +277,10 @@ class XmlReader
                     $element = $this->parseXml($result);
 
                     yield $element[array_key_first($element)];
-
-                    $hasYieldedResult = true;
-                }
-
-                if ($hasYieldedResult === false && $nullable === false) {
-                    throw new XmlReaderException(sprintf('Unable to find matches for [%s]', $name));
                 }
             };
 
-            if ($asGenerator === true) {
-                return $results();
-            }
-
-            $results = iterator_to_array($results());
-
-            if (empty($results) && $nullable === true) {
-                return null;
-            }
-
-            return count($results) === 1 ? $results[0] : $results;
+            return new Node($name, $results());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -308,42 +291,34 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, Element>|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException|\Throwable
+     * @throws \Throwable
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathElement(string $query, bool $nullable = false): Element|array|null
+    public function xpathElement(string $query): Node
     {
         try {
             $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
 
-            $document = Document::fromXmlString($xml);
-            $xpath = $document->xpath();
+            $xpath = Document::fromXmlString($xml)->xpath();
 
             $elements = $xpath->query($query);
 
-            if ($elements->count() === 0) {
-                return $nullable ? null : throw new XmlReaderException(sprintf('No results found for [%s].', $query));
-            }
+            $generator = function () use ($elements) {
+                foreach ($elements as $element) {
+                    if (! $element instanceof DOMElement) {
+                        continue;
+                    }
 
-            $results = [];
+                    $decodedElement = element_decode($element);
+                    $firstKey = (string)array_key_first($decodedElement);
 
-            foreach ($elements as $element) {
-                if (! $element instanceof DOMElement) {
-                    continue;
+                    $result = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
+
+                    yield $result[array_key_first($result)];
                 }
+            };
 
-                $decodedElement = element_decode($element);
-                $firstKey = (string)array_key_first($decodedElement);
-
-                $results[] = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
-            }
-
-            $results = array_map(static function (array $element) {
-                return $element[array_key_first($element)];
-            }, $results);
-
-            return count($results) === 1 ? $results[0] : $results;
+            return new Node($query, $generator());
         } catch (Throwable $throwable) {
             $this->__destruct();
 
@@ -354,56 +329,39 @@ class XmlReader
     /**
      * Convert the XML into an array
      *
-     * @return array<string, mixed>|Generator
      * @throws \Throwable
      */
-    public function values(bool $asGenerator = false): array|Generator
+    public function values(): array
     {
-        return $this->convertElementArrayIntoValues($this->elements($asGenerator));
+        return $this->convertElementArrayIntoValues($this->elements());
     }
 
     /**
      * Find and retrieve value of element
      *
      * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\Data\Element|Generator|array<string, mixed>|string|null
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException|\Throwable
+     * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
+     * @throws \Throwable
      */
-    public function value(string $name, array $withAttributes = [], bool $nullable = false, bool $asGenerator = false): Element|Generator|array|string|null
+    public function value(string $name, array $withAttributes = []): Node
     {
-        $value = $this->element($name, $withAttributes, $nullable, $asGenerator);
+        $node = $this->element($name, $withAttributes)->lazy();
 
-        if ($value instanceof Element) {
-            $value = $value->getContent();
-        }
-
-        if (! is_array($value) && ! $value instanceof Generator) {
-            return $value;
-        }
-
-        return $this->convertElementArrayIntoValues($value);
+        return new Node($name, $this->convertElementArrayIntoValues($node));
     }
 
     /**
      * Find and retrieve value of element
      *
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>|string|null
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
-     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException|\Throwable
+     * @throws \Throwable
+     * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathValue(string $name, bool $nullable = false): Element|array|string|null
+    public function xpathValue(string $query): Node
     {
-        $value = $this->xpathElement($name, $nullable);
+        $node = $this->xpathElement($query)->lazy();
 
-        if ($value instanceof Element) {
-            $value = $value->getContent();
-        }
-
-        if (! is_array($value)) {
-            return $value;
-        }
-
-        return $this->convertElementArrayIntoValues($value);
+        return new Node($query, $this->convertElementArrayIntoValues($node));
     }
 
     /**
@@ -483,19 +441,6 @@ class XmlReader
     }
 
     /**
-     * Handle destructing the reader
-     *
-     * Close the temporary file if it is present
-     */
-    public function __destruct()
-    {
-        if (isset($this->streamFile)) {
-            fclose($this->streamFile);
-            unset($this->streamFile);
-        }
-    }
-
-    /**
      * Load the root element name of the document
      */
     private function loadRootElementName(): void
@@ -510,6 +455,19 @@ class XmlReader
             )->current();
         } catch (LogicException) {
             //
+        }
+    }
+
+    /**
+     * Handle destructing the reader
+     *
+     * Close the temporary file if it is present
+     */
+    public function __destruct()
+    {
+        if (isset($this->streamFile)) {
+            fclose($this->streamFile);
+            unset($this->streamFile);
         }
     }
 }

@@ -24,7 +24,8 @@
         "spatie/ray": "^1.33",
         "psr/http-message": "^2.0",
         "guzzlehttp/guzzle": "^7.8",
-        "saloonphp/saloon": "^3.0"
+        "saloonphp/saloon": "^3.0",
+        "illuminate/collections": "^10.30"
     },
     "minimum-stability": "stable",
     "autoload": {
@@ -48,5 +49,8 @@
         "test": [
             "./vendor/bin/pest"
         ]
+    },
+    "suggest": {
+        "illuminate/collections": "Used for the collect and lazyCollect methods when reading XML."
     }
 }
