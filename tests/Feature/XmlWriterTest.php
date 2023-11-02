@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Saloon\XmlWrangler\Data\CDATA;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\XmlWrangler\XmlWriter;
 use Saloon\XmlWrangler\Data\Element;
