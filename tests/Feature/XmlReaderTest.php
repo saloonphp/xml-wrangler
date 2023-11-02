@@ -494,3 +494,21 @@ test('when an element has attributes and text content it will still be converted
         'food' => Element::make('Berry-Berry Belgian Waffles')->addAttribute('bestSeller', 'true'),
     ]);
 });
+
+test('the root element name is discarded', function () {
+    $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
+
+    expect($reader->value('breakfast_menu.name.0'))->toBe('Belgian Waffles');
+});
+
+test('can test large xml files', function () {
+    $file = '/Users/samcarre/Documents/XML/psd7003.xml';
+
+    $reader = XmlReader::fromFile($file);
+
+    $values = $reader->value('refinfo', asGenerator: true);
+
+    foreach ($values as $value) {
+        dd($value);
+    }
+})->skip();
