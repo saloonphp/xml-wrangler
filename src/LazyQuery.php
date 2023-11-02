@@ -7,8 +7,6 @@ namespace Saloon\XmlWrangler;
 use Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
-use Saloon\XmlWrangler\Exceptions\MissingNodeException;
-use Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException;
 
 class LazyQuery extends Query
 {

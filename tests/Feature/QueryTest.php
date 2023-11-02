@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\Query;
+use Saloon\XmlWrangler\LazyQuery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use Saloon\XmlWrangler\Exceptions\MissingNodeException;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Saloon\XmlWrangler\Query;
+use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
@@ -127,7 +128,11 @@ test('can parse xml and search for a specific element', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $element = $reader->element('customer')->sole();
+    $query = $reader->element('customer');
+
+    expect($query)->toBeInstanceOf(LazyQuery::class);
+
+    $element = $query->sole();
 
     expect($element)->toBeInstanceOf(Element::class);
     expect($element->getAttributes())->toEqual(['id' => '55000']);
@@ -140,7 +145,11 @@ test('can parse xml and search for a specific value', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $value = $reader->value('customer')->sole();
+    $query = $reader->value('customer');
+
+    expect($query)->toBeInstanceOf(LazyQuery::class);
+
+    $value = $query->sole();
 
     expect($value)->toBeArray();
     expect($value)->toHaveCount(2);
@@ -367,6 +376,7 @@ test('can use xpath to find an element', function () {
     $bestSellers = $reader->xpathValue('/breakfast_menu/food[@bestSeller="true"]');
 
     expect($bestSellers)->toBeInstanceOf(Query::class);
+    expect($bestSellers)->not->toBeInstanceOf(LazyQuery::class);
 
     expect($bestSellers->get())->toEqual([
         [
@@ -386,6 +396,9 @@ test('can use xpath to find an element', function () {
     // Let's test a single value
 
     $berryBerryWaffles = $reader->xpathElement('/breakfast_menu/food[3]');
+
+    expect($berryBerryWaffles)->toBeInstanceOf(Query::class);
+    expect($berryBerryWaffles)->not->toBeInstanceOf(LazyQuery::class);
 
     expect($berryBerryWaffles->sole())->toEqual(
         Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
