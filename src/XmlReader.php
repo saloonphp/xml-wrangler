@@ -246,14 +246,6 @@ class XmlReader
                 $matchers[$lastMatcherIndex] = Matcher\all($matchers[$lastMatcherIndex], ...$attributeMatchers);
             }
 
-            // If there is more than one matcher, then we should wrap the matchers in a sequence.
-            // This will mean that each matcher will only use the results from the previous
-            // matcher.
-
-            if (count($matchers) > 1) {
-                $matchers = [Matcher\sequence(...$matchers)];
-            }
-
             $results = $this->reader->provide(
                 Matcher\nested(
                     Matcher\document_element(),
