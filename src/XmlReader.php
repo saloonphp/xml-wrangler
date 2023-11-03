@@ -7,7 +7,6 @@ namespace Saloon\XmlWrangler;
 use Generator;
 use Throwable;
 use DOMElement;
-use LogicException;
 use Saloon\Http\Response;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
@@ -15,7 +14,6 @@ use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
-use VeeWee\Xml\Reader\Node\NodeSequence;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
@@ -26,11 +24,6 @@ class XmlReader
      * XML Reader
      */
     protected Reader $reader;
-
-    /**
-     * Root element name
-     */
-    protected string $rootElementName;
 
     /**
      * Temporary File For Stream
@@ -52,8 +45,6 @@ class XmlReader
 
         $this->reader = $reader;
         $this->streamFile = $streamFile;
-
-        $this->loadRootElementName();
     }
 
     /**
@@ -192,12 +183,6 @@ class XmlReader
         try {
             $searchTerms = explode('.', $name);
 
-            // Remove the root element name because we search underneath it
-
-            if ($searchTerms[0] === $this->rootElementName) {
-                array_shift($searchTerms);
-            }
-
             $lastSearchTermIndex = array_key_last($searchTerms);
 
             // We'll start by creating a matcher for each search term that has been provided.
@@ -246,19 +231,8 @@ class XmlReader
                 $matchers[$lastMatcherIndex] = Matcher\all($matchers[$lastMatcherIndex], ...$attributeMatchers);
             }
 
-            // If there is more than one matcher, then we should wrap the matchers in a sequence.
-            // This will mean that each matcher will only use the results from the previous
-            // matcher.
-
-            if (count($matchers) > 1) {
-                $matchers = [Matcher\sequence(...$matchers)];
-            }
-
             $results = $this->reader->provide(
-                Matcher\nested(
-                    Matcher\document_element(),
-                    ...$matchers
-                ),
+                Matcher\nested(...$matchers),
             );
 
             // Now we'll create our own generator around the generator provided by the results.
@@ -441,24 +415,6 @@ class XmlReader
         }
 
         return [$key => $element];
-    }
-
-    /**
-     * Load the root element name of the document
-     */
-    private function loadRootElementName(): void
-    {
-        try {
-            $this->reader->provide(
-                function (NodeSequence $nodeSequence) {
-                    $this->rootElementName = $nodeSequence->current()->name();
-
-                    throw new LogicException;
-                }
-            )->current();
-        } catch (LogicException) {
-            //
-        }
     }
 
     /**

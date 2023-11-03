@@ -437,6 +437,14 @@ test('the root element name is discarded', function () {
     expect($reader->value('breakfast_menu.name.0')->sole())->toBe('Belgian Waffles');
 });
 
+test('can read deeply nested items', function () {
+    $reader = XmlReader::fromFile('tests/Fixtures/nested-breakfast-menu.xml');
+
+    expect($reader->value('food.ingredient')->get())->toEqual([
+        'Sugar', 'Berries', 'Bread', 'Egg',
+    ]);
+});
+
 test('can test large xml files', function () {
     $file = '/Users/samcarre/Documents/XML/psd7003.xml';
 

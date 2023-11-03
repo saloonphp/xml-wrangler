@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<breakfast_menu name="Big G's Breakfasts">
+  <food soldOut="false" bestSeller="true">
+    <name>Berry-Berry Belgian Waffles</name>
+    <price>$8.95</price>
+    <description>Light Belgian waffles covered with an assortment of fresh berries and whipped cream</description>
+    <calories>900</calories>
+    <ingredients>
+      <ingredient>Sugar</ingredient>
+      <ingredient>Berries</ingredient>
+    </ingredients>
+  </food>
+  <food soldOut="true" bestSeller="false">
+    <name>French Toast</name>
+    <price>$4.50</price>
+    <description>Thick slices made from our homemade sourdough bread</description>
+    <calories>600</calories>
+    <ingredients>
+      <ingredient>Bread</ingredient>
+      <ingredient>Egg</ingredient>
+    </ingredients>
+  </food>
+  <food soldOut="false" bestSeller="false">
+    <name>Homestyle Breakfast</name>
+    <price>$6.95</price>
+    <description>Two eggs, bacon or sausage, toast, and our ever-popular hash browns</description>
+    <calories>950</calories>
+  </food>
+</breakfast_menu>
