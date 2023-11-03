@@ -30,7 +30,11 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "Saloon\\XmlWrangler\\": "src/",
+            "Saloon\\XmlWrangler\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
             "Saloon\\XmlWrangler\\Tests\\": "tests/"
         }
     },
