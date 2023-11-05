@@ -20,7 +20,6 @@ use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
-use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 
 class XmlReader
 {
