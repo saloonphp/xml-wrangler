@@ -242,6 +242,14 @@ $reader->value('song', ['recent' => 'true'])->sole(); // 'London Symfony Orchest
 ### Reading with XPath
 XPath is a fantastic way to search through XML. With one string, you can search for a specific element, with specific attributes or indexes. If you are interested in learning XPath, you can [click here for a useful cheatsheet](https://devhints.io/xpath).
 
+#### Reading Specific Values via XPath
+You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
+```php
+<?php
+$reader = XmlReader::fromString(...);
+
+$reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
+```
 #### Reading Specific Elements via XPath
 You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
 ```php
@@ -250,14 +258,6 @@ You can use the `xpathElement` method to find a specific element with an [XPath]
 $reader = XmlReader::fromString(...);
 
 $reader->xpathElement('//person/favourite-songs/song[3]')->sole(); //  Element('London Symfony Orchestra - Starfield Suite')
-```
-#### Reading Specific Values via XPath
-You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
-```php
-<?php
-$reader = XmlReader::fromString(...);
-
-$reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
 ```
 >**Warning**
 >Due to limitations with XPath - the above methods used to query with XPath are not memory safe and may not be suitable for large XML documents.
