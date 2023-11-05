@@ -5,24 +5,22 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
-use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
+use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
-use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
-use function VeeWee\Xml\Encoding\xml_encode;
 use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
-use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
+use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 
 class XmlReader
 {
