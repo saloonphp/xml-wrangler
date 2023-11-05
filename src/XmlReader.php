@@ -285,7 +285,7 @@ class XmlReader
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xmlConfigurators[] = traverse(new RemoveRootNamespace);
+                $xmlConfigurators[] = traverse(RemoveNamespaces::unprefixed());
             } else {
                 $xpathConfigurators[] = namespaces($namespaceMap);
             }
