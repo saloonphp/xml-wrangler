@@ -182,7 +182,7 @@ $reader->value('song')->get(); // ['Luke Combs - When It Rains It Pours', 'Sam R
 $reader->value('song.2')->sole(); // 'London Symfony Orchestra - Starfield Suite'
 ```
 #### Reading Specific Elements
-You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
+You can use the `element` method to search for a specific element. This method will return an `Element` class which contains the value and attributes. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
 This method will return a `LazyQuery` class which has different methods to retrieve the data.
 ```php
