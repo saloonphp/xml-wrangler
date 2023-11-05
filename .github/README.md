@@ -220,7 +220,7 @@ $names = $reader->value('name')->collect();
 
 $names = $reader->value('name')->collectLazy();
 ```
-#### Searching for specific elements
+#### Searching by specific attributes
 Sometimes you might want to search for a specific element or value where the element contains a specific attribute. You can do this by providing a second argument to the `value` or `element` method. This will search the last element for the attributes and will return if they match.
 ```php
 $reader = XmlReader::fromString('
