@@ -8,7 +8,6 @@ use Generator;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
-use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
@@ -20,6 +19,7 @@ use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
 
 class XmlReader
