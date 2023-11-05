@@ -276,7 +276,7 @@ class XmlReader
     public function xpathElement(string $query, array $namespaceMap = []): Query
     {
         try {
-            $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
+            $xml = $this->reader->provide(Matcher\document_element())->current();
 
             $xpathConfigurators = [];
 
