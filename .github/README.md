@@ -182,7 +182,7 @@ $reader->value('song')->get(); // ['Luke Combs - When It Rains It Pours', 'Sam R
 $reader->value('song.2')->sole(); // 'London Symfony Orchestra - Starfield Suite'
 ```
 #### Reading Specific Elements
-You can use the `element` method to search for a specific element. This method will return an `Element` class which contains the value and attributes. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
+You can use the `element` method to search for a specific element. This method will provide an `Element` class which contains the value and attributes. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
 This method will return a `LazyQuery` class which has different methods to retrieve the data.
 ```php
@@ -243,7 +243,7 @@ $reader->value('song', ['recent' => 'true'])->sole(); // 'London Symfony Orchest
 XPath is a fantastic way to search through XML. With one string, you can search for a specific element, with specific attributes or indexes. If you are interested in learning XPath, you can [click here for a useful cheatsheet](https://devhints.io/xpath).
 
 #### Reading Specific Values via XPath
-You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
+You can use the `xpathValue` method to find a specific element's value with an XPath query. This method will return a `Query` class which has different methods to retrieve the data.
 ```php
 <?php
 $reader = XmlReader::fromString(...);
@@ -251,7 +251,7 @@ $reader = XmlReader::fromString(...);
 $reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
 ```
 #### Reading Specific Elements via XPath
-You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
+You can use the `xpathElement` method to find a specific element with an XPath query. This method will return a `Query` class which has different methods to retrieve the data.
 ```php
 <?php
 
