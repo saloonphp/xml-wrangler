@@ -8,6 +8,7 @@ use Generator;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
+use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
