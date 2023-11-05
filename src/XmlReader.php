@@ -16,7 +16,6 @@ use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
-use function VeeWee\Xml\Encoding\xml_encode;
 use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
@@ -285,7 +284,7 @@ class XmlReader
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xml = xml_encode(xml_decode($xml, traverse(RemoveNamespaces::unprefixed())));
+                $xml = Document::fromXmlString($xml, traverse(RemoveNamespaces::unprefixed()))->toXmlString();
             } else {
                 $xpathConfigurators[] = namespaces($namespaceMap);
             }
