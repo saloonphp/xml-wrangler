@@ -474,9 +474,7 @@ XML
 
     // We should be able to search and the root namespaces should be missing.
 
-    $xpathElement = $reader->xpathElement('/container/services/service[@id="service_container"]')->get();
-
-    dd($xpathElement);
+    $xpathElement = $reader->xpathElement('/container/services/service[@id="service_container"]')->sole();
 
     expect($xpathElement)->toEqual(
         Element::make('')->setAttributes([
