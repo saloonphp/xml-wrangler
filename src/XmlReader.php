@@ -15,8 +15,12 @@ use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
+use function VeeWee\Xml\Encoding\xml_encode;
 use function VeeWee\Xml\Encoding\element_decode;
+use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
+use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 
 class XmlReader
 {
@@ -265,15 +269,27 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
+     * @param array<string, string> $namespaceMap
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathElement(string $query): Query
+    public function xpathElement(string $query, array $namespaceMap = []): Query
     {
         try {
             $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
 
-            $xpath = Document::fromXmlString($xml)->xpath();
+            $configurators = [];
+
+            // When the namespace map is empty we will remove the root namespaces
+            // because if they are not mapped then you cannot search on them.
+
+            if (empty($namespaceMap)) {
+                $xml = xml_encode(xml_decode($xml, traverse(new RemoveRootNamespace)));
+            } else {
+                $configurators[] = namespaces($namespaceMap);
+            }
+
+            $xpath = Document::fromXmlString($xml)->xpath(...$configurators);
 
             $elements = $xpath->query($query);
 
@@ -284,6 +300,7 @@ class XmlReader
                     }
 
                     $decodedElement = element_decode($element);
+
                     $firstKey = (string)array_key_first($decodedElement);
 
                     $result = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
@@ -314,13 +331,13 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
-     * @param array<string, string> $withAttributes
+     * @param array<string, string> $attributes
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      */
-    public function value(string $name, array $withAttributes = []): LazyQuery
+    public function value(string $name, array $attributes = []): LazyQuery
     {
-        $node = $this->element($name, $withAttributes)->lazy();
+        $node = $this->element($name, $attributes)->lazy();
 
         return new LazyQuery($name, $this->convertElementArrayIntoValues($node));
     }
@@ -328,14 +345,15 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
+     * @param array<string, string> $namespaceMap
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathValue(string $query): Query
+    public function xpathValue(string $query, array $namespaceMap = []): Query
     {
-        $generator = function () use ($query) {
-            yield from $this->xpathElement($query)->get();
+        $generator = function () use ($query, $namespaceMap) {
+            yield from $this->xpathElement($query, $namespaceMap)->get();
         };
 
         return new Query($query, $this->convertElementArrayIntoValues($generator()));

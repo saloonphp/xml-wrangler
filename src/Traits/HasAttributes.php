@@ -90,4 +90,12 @@ trait HasAttributes
     {
         return $this->attributes;
     }
+
+    /**
+     * Get an individual attribute
+     */
+    public function getAttribute(string $name, mixed $default = null): mixed
+    {
+        return $this->attributes[$name] ?? $default;
+    }
 }
