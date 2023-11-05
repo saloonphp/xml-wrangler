@@ -445,6 +445,113 @@ test('can read deeply nested items', function () {
     ]);
 });
 
+test('root namespaces are removed from the element searches', function () {
+    $reader = XmlReader::fromString(
+        <<<XML
+<container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+  <services>
+    <service id="service_container" class="Symfony\Component\DependencyInjection\ContainerInterface" public="true" synthetic="true"/>
+    <service id="kernel" class="TicketSwap\Kernel" public="true" synthetic="true" autoconfigure="true">
+      <tag xmlns="http://symfony.com/schema/dic/tag-1" name="controller.service_arguments">1</tag>
+      <tag xmlns="http://symfony.com/schema/dic/tag-2"  name="routing.route_loader">2</tag>
+    </service>
+  </services>
+</container>
+XML
+    );
+
+    $element = $reader->element('container.services.service', ['id' => 'service_container'])->sole();
+
+    expect($element)->toEqual(
+        Element::make('')->setAttributes([
+            'id' => 'service_container',
+            'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
+            'public' => 'true',
+            'synthetic' => 'true',
+            'xmlns' => 'http://symfony.com/schema/dic/services',
+        ])
+    );
+
+    // We should be able to search and the root namespaces should be missing.
+
+    $xpathElement = $reader->xpathElement('/container/services/service[@id="service_container"]')->sole();
+
+    expect($xpathElement)->toEqual(
+        Element::make('')->setAttributes([
+            'id' => 'service_container',
+            'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
+            'public' => 'true',
+            'synthetic' => 'true',
+        ])
+    );
+
+    // Or we can map them and they will be searchable
+
+    $reader->setXpathNamespaceMap(['root' => 'http://symfony.com/schema/dic/services']);
+
+    $mappedXpathElement = $reader->xpathElement(
+        '/root:container/root:services/root:service[@id="service_container"]',
+    )->sole();
+
+    expect($mappedXpathElement)->toEqual(
+        Element::make('')->setAttributes([
+            'id' => 'service_container',
+            'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
+            'public' => 'true',
+            'synthetic' => 'true',
+            'xmlns' => 'http://symfony.com/schema/dic/services',
+        ])
+    );
+
+    // Test that nested namespaces work too
+
+    $tags = $reader->element('tag')->get();
+
+    expect($tags)->toEqual([
+        Element::make('1')->setAttributes(['name' => 'controller.service_arguments', 'xmlns' => 'http://symfony.com/schema/dic/tag-1']),
+        Element::make('2')->setAttributes(['name' => 'routing.route_loader', 'xmlns' => 'http://symfony.com/schema/dic/tag-2']),
+    ]);
+
+    // Test we can query xpath element
+
+    $reader->setXpathNamespaceMap([]);
+
+    $xpathTags = $reader->xpathElement('/container/services/service/tag')->get();
+
+    expect($xpathTags)->toEqual([
+        Element::make('1')->setAttributes(['name' => 'controller.service_arguments']),
+        Element::make('2')->setAttributes(['name' => 'routing.route_loader']),
+    ]);
+
+    // Test we can query xpath elements with mapping
+
+    $reader->setXpathNamespaceMap([
+        'root' => 'http://symfony.com/schema/dic/services',
+        'tag-1' => 'http://symfony.com/schema/dic/tag-1',
+        'tag-2' => 'http://symfony.com/schema/dic/tag-2',
+    ]);
+
+    $mappedXpathTag = $reader->xpathElement(
+        '/root:container/root:services/root:service/tag-1:tag',
+    )->sole();
+
+    expect($mappedXpathTag)->toEqual(Element::make('1')
+        ->setAttributes(['name' => 'controller.service_arguments', 'xmlns' => 'http://symfony.com/schema/dic/tag-1']));
+
+    // Works with XPath Element
+
+    $reader->setXpathNamespaceMap([
+        'root' => 'http://symfony.com/schema/dic/services',
+        'tag-1' => 'http://symfony.com/schema/dic/tag-1',
+    ]);
+
+    $mappedXpathTag = $reader->xpathValue(
+        query: '/root:container/root:services/root:service/tag-1:tag',
+    )->sole();
+
+    expect($mappedXpathTag)->toBe('1');
+});
+
 test('can test large xml files', function () {
     $file = '/Users/samcarre/Documents/XML/psd7003.xml';
 

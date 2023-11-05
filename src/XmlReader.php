@@ -8,6 +8,7 @@ use Generator;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
+use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
@@ -16,7 +17,10 @@ use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
+use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
+use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
 
 class XmlReader
 {
@@ -31,6 +35,15 @@ class XmlReader
      * @var resource|null
      */
     protected mixed $streamFile = null;
+
+    /**
+     * XPath namespace map
+     *
+     * Used to map un-prefixed namespaces
+     *
+     * @var array<string, string>
+     */
+    protected array $xpathNamespaceMap = [];
 
     /**
      * Constructor
@@ -271,9 +284,21 @@ class XmlReader
     public function xpathElement(string $query): Query
     {
         try {
-            $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
+            $xml = $this->reader->provide(Matcher\document_element())->current();
 
-            $xpath = Document::fromXmlString($xml)->xpath();
+            $xpathConfigurators = [];
+            $namespaceMap = $this->xpathNamespaceMap;
+
+            // When the namespace map is empty we will remove the root namespaces
+            // because if they are not mapped then you cannot search on them.
+
+            if (empty($namespaceMap)) {
+                $xml = Document::fromXmlString($xml, traverse(RemoveNamespaces::unprefixed()))->toXmlString();
+            } else {
+                $xpathConfigurators[] = namespaces($namespaceMap);
+            }
+
+            $xpath = Document::fromXmlString($xml)->xpath(...$xpathConfigurators);
 
             $elements = $xpath->query($query);
 
@@ -284,6 +309,7 @@ class XmlReader
                     }
 
                     $decodedElement = element_decode($element);
+
                     $firstKey = (string)array_key_first($decodedElement);
 
                     $result = $this->convertArrayIntoElements($firstKey, $decodedElement[$firstKey]);
@@ -314,13 +340,13 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
-     * @param array<string, string> $withAttributes
+     * @param array<string, string> $attributes
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      */
-    public function value(string $name, array $withAttributes = []): LazyQuery
+    public function value(string $name, array $attributes = []): LazyQuery
     {
-        $node = $this->element($name, $withAttributes)->lazy();
+        $node = $this->element($name, $attributes)->lazy();
 
         return new LazyQuery($name, $this->convertElementArrayIntoValues($node));
     }
@@ -415,6 +441,20 @@ class XmlReader
         }
 
         return [$key => $element];
+    }
+
+    /**
+     * Set the XPath namespace map
+     *
+     * Used to map un-prefixed namespaces
+     *
+     * @param array<string, string> $xpathNamespaceMap
+     */
+    public function setXpathNamespaceMap(array $xpathNamespaceMap): XmlReader
+    {
+        $this->xpathNamespaceMap = $xpathNamespaceMap;
+
+        return $this;
     }
 
     /**
