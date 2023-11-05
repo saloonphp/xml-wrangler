@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
+use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
 use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
+use VeeWee\Xml\Dom\Xpath;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
 use Saloon\XmlWrangler\Data\Element;
@@ -278,18 +280,19 @@ class XmlReader
         try {
             $xml = iterator_to_array($this->reader->provide(Matcher\document_element()))[0];
 
-            $configurators = [];
+            $xmlConfigurators = [];
+            $xpathConfigurators = [];
 
             // When the namespace map is empty we will remove the root namespaces
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xml = xml_encode(xml_decode($xml, traverse(RemoveNamespaces::unprefixed())));
+                $xmlConfigurators[] = traverse(new RemoveRootNamespace);
             } else {
-                $configurators[] = namespaces($namespaceMap);
+                $xpathConfigurators[] = namespaces($namespaceMap);
             }
 
-            $xpath = Document::fromXmlString($xml)->xpath(...$configurators);
+            $xpath = Document::fromXmlString($xml, ...$xmlConfigurators)->xpath(...$xpathConfigurators);
 
             $elements = $xpath->query($query);
 
