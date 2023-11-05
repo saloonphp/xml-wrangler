@@ -19,8 +19,8 @@ use function VeeWee\Xml\Encoding\xml_encode;
 use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
+use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
-use Saloon\XmlWrangler\Reader\Visitors\RemoveRootNamespace;
 
 class XmlReader
 {
@@ -284,7 +284,7 @@ class XmlReader
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xml = xml_encode(xml_decode($xml, traverse(new RemoveRootNamespace)));
+                $xml = xml_encode(xml_decode($xml, traverse(RemoveNamespaces::unprefixed())));
             } else {
                 $configurators[] = namespaces($namespaceMap);
             }
