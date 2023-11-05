@@ -181,17 +181,6 @@ $reader->value('song')->get(); // ['Luke Combs - When It Rains It Pours', 'Sam R
 
 $reader->value('song.2')->sole(); // 'London Symfony Orchestra - Starfield Suite'
 ```
-#### Reading Specific Values via XPath
-You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
-```php
-<?php
-
-$reader = XmlReader::fromString(...);
-
-$reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
-```
->**Warning**
->This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
 #### Reading Specific Elements
 You can use the `element` method to search for a specific element. You can use dot-notation to search for child elements. You can also use whole numbers to find specific positions of multiple elements. This method searches through the whole XML body in a memory efficient way.
 
@@ -215,18 +204,6 @@ $reader->element('song')->get(); // [Element('Luke Combs - When It Rains It Pour
 
 $reader->element('song.2')->sole(); // Element('London Symfony Orchestra - Starfield Suite')
 ```
-#### Reading Specific Elements via XPath
-You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
-```php
-<?php
-
-$reader = XmlReader::fromString(...);
-
-$reader->xpathElement('//person/favourite-songs/song[3]')->sole(); //  Element('London Symfony Orchestra - Starfield Suite')
-```
->**Warning**
->This method is not memory safe as XPath requires all the XML to be loaded in memory at once.
-
 #### Lazily Iterating
 When searching a large file, you can use the `lazy` or `collectLazy` methods which will return a generator of results only keeping one item in memory at a time.
 ```php
@@ -243,7 +220,61 @@ $names = $reader->value('name')->collect();
 
 $names = $reader->value('name')->collectLazy();
 ```
+#### Searching for specific elements
+Sometimes you might want to search for a specific element or value where the element contains a specific attribute. You can do this by providing a second argument to the `value` or `element` method. This will search the last element for the attributes and will return if they match.
+```php
+$reader = XmlReader::fromString('
+    <?xml version="1.0" encoding="utf-8"?>
+    <person>
+        <name>Sammyjo20</name>
+        <favourite-songs>
+            <song>Luke Combs - When It Rains It Pours</song>
+            <song>Sam Ryder - SPACE MAN</song>
+            <song recent="true">London Symfony Orchestra - Starfield Suite</song>
+        </favourite-songs>
+    </person>
+');
 
+$reader->element('song', ['recent' => 'true'])->sole(); // Element('London Symfony Orchestra - Starfield Suite')
+
+$reader->value('song', ['recent' => 'true'])->sole(); // 'London Symfony Orchestra - Starfield Suite'
+```
+### Reading with XPath
+XPath is a fantastic way to search through XML. With one string, you can search for a specific element, with specific attributes or indexes. If you are interested in learning XPath, you can [click here for a useful cheatsheet](https://devhints.io/xpath).
+
+#### Reading Specific Elements via XPath
+You can use the `xpathElement` method to find a specific element with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
+```php
+<?php
+
+$reader = XmlReader::fromString(...);
+
+$reader->xpathElement('//person/favourite-songs/song[3]')->sole(); //  Element('London Symfony Orchestra - Starfield Suite')
+```
+#### Reading Specific Values via XPath
+You can use the `xpathValue` method to find a specific element's value with an [XPath](https://devhints.io/xpath) query. This method will return a `Query` class which has different methods to retrieve the data.
+```php
+<?php
+$reader = XmlReader::fromString(...);
+
+$reader->xpathValue('//person/favourite-songs/song[3]')->sole(); //  'London Symfony Orchestra - Starfield Suite'
+```
+>**Warning**
+>Due to limitations with XPath - the above methods used to query with XPath are not memory safe and may not be suitable for large XML documents.
+#### XPath and un-prefixed namespaces
+You might found yourself with an XML document that contains an un-prefixed `xmlns` attribute - like this:
+```xml
+<container xmlns="http://example.com/xml-wrangler/person" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
+```
+When this happens, XML Wrangler will automatically remove these un-prefixed namespaces to improve compatability. If you would like to keep these namespaces, you can use `setXpathNamespaceMap` to map each un-prefixed XML namespace.
+```php
+$reader = XmlReader::fromString(...);
+$reader->setXpathNamespaceMap([
+    'root' => 'http://example.com/xml-wrangler/person',
+]);
+
+$reader->xpathValue('//root:person/root:favourite-songs/root:song[3]')->sole();
+```
 ### Writing XML
 This section on the documentation is for using the XML writer.
 #### Basic Usage

@@ -37,6 +37,15 @@ class XmlReader
     protected mixed $streamFile = null;
 
     /**
+     * XPath namespace map
+     *
+     * Used to map un-prefixed namespaces
+     *
+     * @var array<string, string>
+     */
+    protected array $xpathNamespaceMap = [];
+
+    /**
      * Constructor
      *
      * @param resource $streamFile
@@ -269,16 +278,16 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
-     * @param array<string, string> $namespaceMap
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathElement(string $query, array $namespaceMap = []): Query
+    public function xpathElement(string $query): Query
     {
         try {
             $xml = $this->reader->provide(Matcher\document_element())->current();
 
             $xpathConfigurators = [];
+            $namespaceMap = $this->xpathNamespaceMap;
 
             // When the namespace map is empty we will remove the root namespaces
             // because if they are not mapped then you cannot search on them.
@@ -345,15 +354,14 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
-     * @param array<string, string> $namespaceMap
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    public function xpathValue(string $query, array $namespaceMap = []): Query
+    public function xpathValue(string $query): Query
     {
-        $generator = function () use ($query, $namespaceMap) {
-            yield from $this->xpathElement($query, $namespaceMap)->get();
+        $generator = function () use ($query) {
+            yield from $this->xpathElement($query)->get();
         };
 
         return new Query($query, $this->convertElementArrayIntoValues($generator()));
@@ -433,6 +441,20 @@ class XmlReader
         }
 
         return [$key => $element];
+    }
+
+    /**
+     * Set the XPath namespace map
+     *
+     * Used to map un-prefixed namespaces
+     *
+     * @param array<string, string> $xpathNamespaceMap
+     */
+    public function setXpathNamespaceMap(array $xpathNamespaceMap): XmlReader
+    {
+        $this->xpathNamespaceMap = $xpathNamespaceMap;
+
+        return $this;
     }
 
     /**

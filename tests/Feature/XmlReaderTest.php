@@ -487,9 +487,10 @@ XML
 
     // Or we can map them and they will be searchable
 
+    $reader->setXpathNamespaceMap(['root' => 'http://symfony.com/schema/dic/services']);
+
     $mappedXpathElement = $reader->xpathElement(
-        query: '/root:container/root:services/root:service[@id="service_container"]',
-        namespaceMap: ['root' => 'http://symfony.com/schema/dic/services']
+        '/root:container/root:services/root:service[@id="service_container"]',
     )->sole();
 
     expect($mappedXpathElement)->toEqual(
@@ -513,6 +514,8 @@ XML
 
     // Test we can query xpath element
 
+    $reader->setXpathNamespaceMap([]);
+
     $xpathTags = $reader->xpathElement('/container/services/service/tag')->get();
 
     expect($xpathTags)->toEqual([
@@ -522,13 +525,14 @@ XML
 
     // Test we can query xpath elements with mapping
 
+    $reader->setXpathNamespaceMap([
+        'root' => 'http://symfony.com/schema/dic/services',
+        'tag-1' => 'http://symfony.com/schema/dic/tag-1',
+        'tag-2' => 'http://symfony.com/schema/dic/tag-2',
+    ]);
+
     $mappedXpathTag = $reader->xpathElement(
-        query: '/root:container/root:services/root:service/tag-1:tag',
-        namespaceMap: [
-            'root' => 'http://symfony.com/schema/dic/services',
-            'tag-1' => 'http://symfony.com/schema/dic/tag-1',
-            'tag-2' => 'http://symfony.com/schema/dic/tag-2',
-        ],
+        '/root:container/root:services/root:service/tag-1:tag',
     )->sole();
 
     expect($mappedXpathTag)->toEqual(Element::make('1')
@@ -536,12 +540,13 @@ XML
 
     // Works with XPath Element
 
+    $reader->setXpathNamespaceMap([
+        'root' => 'http://symfony.com/schema/dic/services',
+        'tag-1' => 'http://symfony.com/schema/dic/tag-1',
+    ]);
+
     $mappedXpathTag = $reader->xpathValue(
         query: '/root:container/root:services/root:service/tag-1:tag',
-        namespaceMap: [
-            'root' => 'http://symfony.com/schema/dic/services',
-            'tag-1' => 'http://symfony.com/schema/dic/tag-1',
-        ],
     )->sole();
 
     expect($mappedXpathTag)->toBe('1');
