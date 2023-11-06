@@ -66,7 +66,7 @@ $reader->element('food.0')->sole(); // Element::class
 $reader->xpathValue('//food[@bestSeller="true"]/name')->get(); // ['Belgian Waffles', 'Berry-Berry Belgian Waffles']
 
 // Use getAttributes() to get the attributes on the elements
-$reader->element('breakfast_menu.food')->getAttributes(); // ['soldOut' => false, 'bestSeller' => true]
+$reader->element('food.0')->sole()->getAttributes(); // ['soldOut' => false, 'bestSeller' => true]
 
 // Use getContent() to get the contents of the elements 
 $reader->element('breakfast_menu.food')->getContent(); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
