@@ -69,7 +69,7 @@ $reader->xpathValue('//food[@bestSeller="true"]/name')->get(); // ['Belgian Waff
 $reader->element('food.0')->sole()->getAttributes(); // ['soldOut' => false, 'bestSeller' => true]
 
 // Use getContent() to get the contents of the elements 
-$reader->element('breakfast_menu.food')->getContent(); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
+$reader->element('food.0')->sole()->getContent(); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
 ```
 
 ## Writing XML
