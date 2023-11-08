@@ -24,6 +24,11 @@ class XmlWriter
     protected string $xmlVersion;
 
     /**
+     * XML standalone
+     */
+    protected bool $xmlStandalone;
+
+    /**
      * Additional processing instructions
      *
      * @var array<string, string>
@@ -33,18 +38,22 @@ class XmlWriter
     /**
      * Constructor
      */
-    public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0')
+    public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', bool $xmlStandalone = null)
     {
         $this->xmlEncoding = $xmlEncoding;
         $this->xmlVersion = $xmlVersion;
+
+        if (! is_null($xmlStandalone)) {
+            $this->xmlStandalone = $xmlStandalone;
+        }
     }
 
     /**
      * Create an XML writer instance
      */
-    public static function make(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0'): static
+    public static function make(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', bool $xmlStandalone = null): static
     {
-        return new static($xmlEncoding, $xmlVersion);
+        return new static($xmlEncoding, $xmlVersion, $xmlStandalone);
     }
 
     /**
@@ -85,7 +94,18 @@ class XmlWriter
             array_merge($rootElementContent, $content)
         );
 
-        $engine = new ArrayToXml($content, $rootElementBuilder, xmlEncoding: $this->xmlEncoding, xmlVersion: $this->xmlVersion);
+        $parameters = [
+            $content,
+            $rootElementBuilder,
+            'xmlEncoding' => $this->xmlEncoding,
+            'xmlVersion' => $this->xmlVersion
+        ];
+
+        if (isset($this->xmlStandalone)) {
+            $parameters['xmlStandalone'] = $this->xmlStandalone;
+        }
+
+        $engine = new ArrayToXml(...$parameters);
 
         // Processing instructions
 
@@ -218,7 +238,7 @@ class XmlWriter
     /**
      * Set the XML encoding
      */
-    public function setXmlEncoding(string $xmlEncoding): XmlWriter
+    public function setXmlEncoding(string $xmlEncoding): static
     {
         $this->xmlEncoding = $xmlEncoding;
 
@@ -228,9 +248,19 @@ class XmlWriter
     /**
      * Set the XML version
      */
-    public function setXmlVersion(string $xmlVersion): XmlWriter
+    public function setXmlVersion(string $xmlVersion): static
     {
         $this->xmlVersion = $xmlVersion;
+
+        return $this;
+    }
+
+    /**
+     * Set the XML standalone
+     */
+    public function setXmlStandalone(bool $xmlStandalone): static
+    {
+        $this->xmlStandalone = $xmlStandalone;
 
         return $this;
     }

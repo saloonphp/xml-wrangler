@@ -15,7 +15,7 @@ composer require saloonphp/xml-wrangler
 > Requires PHP 8.1+
 
 ## Reading XML
-Reading XML can be done by passing the XML string or file into the XML reader and using one of the many methods to search and find a specific element or value. 
+Reading XML can be done by passing the XML string or file into the XML reader and using one of the many methods to search and find a specific element or value.
 You can also convert every element into an easily traversable array if you prefer. If you need to access attributes on an element you can use
 the `Element` DTO which is a simple class to access the content and attributes. XML Wrangler provides methods to iterate through multiple elements while only
 keeping one element in memory at a time.
@@ -68,7 +68,7 @@ $reader->xpathValue('//food[@bestSeller="true"]/name')->get(); // ['Belgian Waff
 // Use getAttributes() to get the attributes on the elements
 $reader->element('food.0')->sole()->getAttributes(); // ['soldOut' => false, 'bestSeller' => true]
 
-// Use getContent() to get the contents of the elements 
+// Use getContent() to get the contents of the elements
 $reader->element('food.0')->sole()->getContent(); // ['name' => 'Belgian Waffles', 'price' => '$5.95', ...]
 ```
 
@@ -97,10 +97,10 @@ $xml = $writer->write('breakfast_menu', [
             'description' => 'Light Belgian waffles covered with strawberries and whipped cream',
             'calories' => '900',
         ],
-        
+
         // You can also use the Element class if you need to define elements with
         // namespaces or with attributes.
-        
+
         Element::make([
             'name' => 'Berry-Berry Belgian Waffles',
             'price' => '$8.95',
@@ -448,8 +448,8 @@ This will result in XML like this:
     </food>
 </breakfast_menu>
 ```
-#### Customising XML encoding and version
-The default XML encoding is `UTF-8` and the default version of XML is `1.0` if you would like to customise this you can with the `setXmlEncoding` and `setXmlVersion` methods on the writer.
+#### Customising XML encoding, version, and standalone
+The default XML encoding is `utf-8`, the default version of XML is `1.0`, and the default standalone is `null` (XML parsers interpret no standalone attribute the same as `false`). If you would like to customise this you can with the `setXmlEncoding`, `setXmlVersion`, and `setXmlStandalone` methods on the writer.
 ```php
 use Saloon\XmlWrangler\XmlWriter;
 
@@ -457,9 +457,11 @@ $writer = new XmlWriter();
 
 $writer->setXmlEncoding('ISO-8859-1');
 $writer->setXmlVersion('2.0');
+$writer->setXmlStandalone(true);
 
 // $writer->write(...);
 ```
+Which results in the XML declaration `<?xml version="2.0" encoding="ISO-8859-1" standalone="yes"?>`.
 #### Adding custom "Processing Instructions" to the XML
 You can add a custom "Processing Instruction" to the XML by using the `addProcessingInstruction` method.
 

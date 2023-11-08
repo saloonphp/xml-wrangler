@@ -42,6 +42,24 @@ XML
     );
 });
 
+test('you can set custom standalone on the writer', function () {
+    $writer = new XmlWriter;
+
+    $writer->setXmlStandalone(true);
+
+    $xml = $writer->write('root', ['a' => 'b']);
+
+    expect($xml)->toBe(
+        <<<XML
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root>
+  <a>b</a>
+</root>
+
+XML
+    );
+});
+
 test('xml can be minified', function () {
     $writer = new XmlWriter;
 
