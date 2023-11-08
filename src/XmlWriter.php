@@ -98,7 +98,7 @@ class XmlWriter
             $content,
             $rootElementBuilder,
             'xmlEncoding' => $this->xmlEncoding,
-            'xmlVersion' => $this->xmlVersion
+            'xmlVersion' => $this->xmlVersion,
         ];
 
         if (isset($this->xmlStandalone)) {
