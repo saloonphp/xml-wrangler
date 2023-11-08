@@ -238,7 +238,7 @@ class XmlWriter
     /**
      * Set the XML encoding
      */
-    public function setXmlEncoding(string $xmlEncoding): XmlWriter
+    public function setXmlEncoding(string $xmlEncoding): static
     {
         $this->xmlEncoding = $xmlEncoding;
 
@@ -248,7 +248,7 @@ class XmlWriter
     /**
      * Set the XML version
      */
-    public function setXmlVersion(string $xmlVersion): XmlWriter
+    public function setXmlVersion(string $xmlVersion): static
     {
         $this->xmlVersion = $xmlVersion;
 
@@ -258,7 +258,7 @@ class XmlWriter
     /**
      * Set the XML standalone
      */
-    public function setXmlStandalone(bool $xmlStandalone): XmlWriter
+    public function setXmlStandalone(bool $xmlStandalone): static
     {
         $this->xmlStandalone = $xmlStandalone;
 
