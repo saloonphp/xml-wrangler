@@ -499,7 +499,6 @@ XML
             'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
             'public' => 'true',
             'synthetic' => 'true',
-            'xmlns' => 'http://symfony.com/schema/dic/services',
         ])
     );
 
