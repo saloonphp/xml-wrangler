@@ -445,7 +445,7 @@ test('can read deeply nested items', function () {
     ]);
 });
 
-test('root namespaces are removed from the element searches', function () {
+test('root namespaces are removed from xpath queries', function () {
     $reader = XmlReader::fromString(
         <<<XML
 <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
@@ -459,6 +459,8 @@ test('root namespaces are removed from the element searches', function () {
 </container>
 XML
     );
+
+    // Element should keep the xmlns
 
     $element = $reader->element('container.services.service', ['id' => 'service_container'])->sole();
 
@@ -499,6 +501,7 @@ XML
             'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
             'public' => 'true',
             'synthetic' => 'true',
+            'xmlns' => 'http://symfony.com/schema/dic/services'
         ])
     );
 
@@ -550,15 +553,3 @@ XML
 
     expect($mappedXpathTag)->toBe('1');
 });
-
-test('can test large xml files', function () {
-    $file = '/Users/samcarre/Documents/XML/psd7003.xml';
-
-    $reader = XmlReader::fromFile($file);
-
-    $values = $reader->value('refinfo')->lazy();
-
-    foreach ($values as $value) {
-        dd($value);
-    }
-})->skip();
