@@ -7,6 +7,11 @@ namespace Saloon\XmlWrangler;
 use Generator;
 use Illuminate\Support\LazyCollection;
 
+/**
+ * @template TReturnType
+ *
+ * @extends \Saloon\XmlWrangler\Query<TReturnType>
+ */
 class LazyQuery extends Query
 {
     /**
@@ -30,7 +35,7 @@ class LazyQuery extends Query
      *
      * Requires illuminate/support
      *
-     * @return LazyCollection<int, mixed>
+     * @return LazyCollection<int, TReturnType>
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function collectLazy(): LazyCollection

@@ -186,6 +186,7 @@ class XmlReader
      * Find an element from the XML
      *
      * @param array<string, string> $withAttributes
+     * @return \Saloon\XmlWrangler\LazyQuery<Element>
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
@@ -277,6 +278,7 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
+     * @return \Saloon\XmlWrangler\Query<Element>
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
@@ -340,6 +342,7 @@ class XmlReader
      * Find and retrieve value of element
      *
      * @param array<string, string> $attributes
+     * @return \Saloon\XmlWrangler\LazyQuery<mixed>
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      */
@@ -353,6 +356,7 @@ class XmlReader
     /**
      * Find and retrieve value of element
      *
+     * @return \Saloon\XmlWrangler\Query<mixed>
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
