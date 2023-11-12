@@ -10,6 +10,9 @@ use Saloon\XmlWrangler\Exceptions\MissingNodeException;
 use Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException;
 use Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException;
 
+/**
+ * @template TReturnType
+ */
 class Query
 {
     /**
@@ -39,7 +42,7 @@ class Query
     /**
      * Return the node as an array
      *
-     * @return array<string, mixed>
+     * @return array<string, TReturnType>
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function get(): array
@@ -54,7 +57,7 @@ class Query
      *
      * Requires illuminate/support
      *
-     * @return Collection<string, mixed>
+     * @return Collection<string, TReturnType>
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function collect(): Collection
@@ -65,6 +68,7 @@ class Query
     /**
      * Retrieve the first value in the node
      *
+     * @return TReturnType
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function first(): mixed
@@ -81,6 +85,7 @@ class Query
     /**
      * Retrieve the first value in the node or fail
      *
+     * @return TReturnType
      * @throws \Saloon\XmlWrangler\Exceptions\MissingNodeException
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
@@ -94,7 +99,7 @@ class Query
      *
      * Throws an exception if none exist or more than one exists.
      *
-     * @return string|null
+     * @return ?TReturnType
      * @throws \Saloon\XmlWrangler\Exceptions\MissingNodeException
      * @throws \Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
