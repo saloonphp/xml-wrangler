@@ -12,8 +12,8 @@ use VeeWee\Xml\Dom\Document;
 use InvalidArgumentException;
 use VeeWee\Xml\Reader\Reader;
 use VeeWee\Xml\Reader\Matcher;
-use Saloon\XmlWrangler\Data\Element;
 use Psr\Http\Message\MessageInterface;
+use Saloon\XmlWrangler\Data\ReaderElement;
 use function VeeWee\Xml\Encoding\xml_decode;
 use function VeeWee\Xml\Encoding\element_decode;
 use function VeeWee\Xml\Dom\Configurator\traverse;
@@ -160,7 +160,7 @@ class XmlReader
     /**
      * Get all elements
      *
-     * @return array<string, Element>
+     * @return array<string, ReaderElement>
      * @throws \Throwable
      */
     public function elements(): array
@@ -186,7 +186,7 @@ class XmlReader
      * Find an element from the XML
      *
      * @param array<string, string> $withAttributes
-     * @return \Saloon\XmlWrangler\LazyQuery<Element>
+     * @return \Saloon\XmlWrangler\LazyQuery<ReaderElement>
      * @throws \Saloon\XmlWrangler\Exceptions\XmlReaderException
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
@@ -278,7 +278,7 @@ class XmlReader
     /**
      * Search for an element with xpath
      *
-     * @return \Saloon\XmlWrangler\Query<Element>
+     * @return \Saloon\XmlWrangler\Query<ReaderElement>
      * @throws \Throwable
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
@@ -394,10 +394,10 @@ class XmlReader
     /**
      * Parse the raw XML string into elements
      *
-     * @return \Saloon\XmlWrangler\Data\Element|array<string, mixed>
+     * @return \Saloon\XmlWrangler\Data\ReaderElement|array<string, mixed>
      * @throws \VeeWee\Xml\Encoding\Exception\EncodingException
      */
-    protected function parseXml(string $xml): Element|array
+    protected function parseXml(string $xml): ReaderElement|array
     {
         $decoded = xml_decode($xml);
 
@@ -409,11 +409,13 @@ class XmlReader
     /**
      * Convert the array into elements
      *
-     * @return array<string, mixed>|\Saloon\XmlWrangler\Data\Element
+     * @return array<string, mixed>|\Saloon\XmlWrangler\Data\ReaderElement
      */
-    protected function convertArrayIntoElements(?string $key, mixed $value): array|Element
+    protected function convertArrayIntoElements(?string $key, mixed $value): array|ReaderElement
     {
-        $element = new Element;
+        $element = new ReaderElement;
+
+        $element->setName($key);
 
         if (is_array($value)) {
             $element->setAttributes($value['@attributes'] ?? []);
@@ -430,7 +432,7 @@ class XmlReader
                 $nestedValues = [];
 
                 foreach ($value as $nestedKey => $nestedValue) {
-                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(null, $nestedValue) : new Element($nestedValue);
+                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(null, $nestedValue) : (new ReaderElement($nestedValue))->setName($nestedKey);
                 }
 
                 $element->setContent($nestedValues);

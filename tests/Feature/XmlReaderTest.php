@@ -9,7 +9,7 @@ use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
-use Saloon\XmlWrangler\Data\Element;
+use Saloon\XmlWrangler\Data\ReaderElement;
 use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 use Saloon\XmlWrangler\Tests\Fixtures\Saloon\BreakfastMenuRequest;
 
@@ -18,54 +18,54 @@ test('can parse xml and convert it into an array of elements', function () {
 
     $reader = XmlReader::fromString($file);
 
-    $belgianWaffles = Element::make([
-        'name' => Element::make('Belgian Waffles'),
-        'price' => Element::make('$5.95'),
-        'description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
-        'calories' => Element::make('650'),
+    $belgianWaffles = ReaderElement::make([
+        'name' => ReaderElement::make('Belgian Waffles'),
+        'price' => ReaderElement::make('$5.95'),
+        'description' => ReaderElement::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+        'calories' => ReaderElement::make('650'),
     ])->setAttributes([
         'soldOut' => 'false', 'bestSeller' => 'true',
     ]);
 
-    $strawberryBelgianWaffles = Element::make([
-        'name' => Element::make('Strawberry Belgian Waffles'),
-        'price' => Element::make('$7.95'),
-        'description' => Element::make('Light Belgian waffles covered with strawberries and whipped cream'),
-        'calories' => Element::make('900'),
+    $strawberryBelgianWaffles = ReaderElement::make([
+        'name' => ReaderElement::make('Strawberry Belgian Waffles'),
+        'price' => ReaderElement::make('$7.95'),
+        'description' => ReaderElement::make('Light Belgian waffles covered with strawberries and whipped cream'),
+        'calories' => ReaderElement::make('900'),
     ])->setAttributes([
         'soldOut' => 'false', 'bestSeller' => 'false',
     ]);
 
-    $berryberryBelgianWaffles = Element::make([
-        'name' => Element::make('Berry-Berry Belgian Waffles'),
-        'price' => Element::make('$8.95'),
-        'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
-        'calories' => Element::make('900'),
+    $berryberryBelgianWaffles = ReaderElement::make([
+        'name' => ReaderElement::make('Berry-Berry Belgian Waffles'),
+        'price' => ReaderElement::make('$8.95'),
+        'description' => ReaderElement::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+        'calories' => ReaderElement::make('900'),
     ])->setAttributes([
         'soldOut' => 'false', 'bestSeller' => 'true',
     ]);
 
-    $frenchToast = Element::make([
-        'name' => Element::make('French Toast'),
-        'price' => Element::make('$4.50'),
-        'description' => Element::make('Thick slices made from our homemade sourdough bread'),
-        'calories' => Element::make('600'),
+    $frenchToast = ReaderElement::make([
+        'name' => ReaderElement::make('French Toast'),
+        'price' => ReaderElement::make('$4.50'),
+        'description' => ReaderElement::make('Thick slices made from our homemade sourdough bread'),
+        'calories' => ReaderElement::make('600'),
     ])->setAttributes([
         'soldOut' => 'true', 'bestSeller' => 'false',
     ]);
 
-    $homestyleBreakfast = Element::make([
-        'name' => Element::make('Homestyle Breakfast'),
-        'price' => Element::make('$6.95'),
-        'description' => Element::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
-        'calories' => Element::make('950'),
+    $homestyleBreakfast = ReaderElement::make([
+        'name' => ReaderElement::make('Homestyle Breakfast'),
+        'price' => ReaderElement::make('$6.95'),
+        'description' => ReaderElement::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
+        'calories' => ReaderElement::make('950'),
     ])->setAttributes([
         'soldOut' => 'false', 'bestSeller' => 'false',
     ]);
 
     $result = [
-        'breakfast_menu' => Element::make([
-            'food' => new Element([
+        'breakfast_menu' => ReaderElement::make([
+            'food' => new ReaderElement([
                 $belgianWaffles,
                 $strawberryBelgianWaffles,
                 $berryberryBelgianWaffles,
@@ -134,7 +134,7 @@ test('can parse xml and search for a specific element', function () {
 
     $element = $query->sole();
 
-    expect($element)->toBeInstanceOf(Element::class);
+    expect($element)->toBeInstanceOf(ReaderElement::class);
     expect($element->getAttributes())->toEqual(['id' => '55000']);
     expect($element->getContent())->toBeArray();
     expect($element->getContent())->toHaveCount(2);
@@ -251,14 +251,14 @@ test('can search for a nested element with specific attributes', function () {
 
     $soldOut = $reader->element('food', ['soldOut' => 'true'])->sole();
 
-    expect($soldOut)->toBeInstanceOf(Element::class);
+    expect($soldOut)->toBeInstanceOf(ReaderElement::class);
 
     expect($soldOut)->toEqual(
-        Element::make()->setAttributes(['soldOut' => 'true', 'bestSeller' => 'false'])->setContent([
-            'name' => Element::make('French Toast'),
-            'price' => Element::make('$4.50'),
-            'description' => Element::make('Thick slices made from our homemade sourdough bread'),
-            'calories' => Element::make('600'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'true', 'bestSeller' => 'false'])->setContent([
+            'name' => ReaderElement::make('French Toast'),
+            'price' => ReaderElement::make('$4.50'),
+            'description' => ReaderElement::make('Thick slices made from our homemade sourdough bread'),
+            'calories' => ReaderElement::make('600'),
         ]),
     );
 
@@ -267,34 +267,34 @@ test('can search for a nested element with specific attributes', function () {
     expect($bestSellers)->toBeArray();
 
     expect($bestSellers)->toEqual([
-        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
-            'name' => Element::make('Belgian Waffles'),
-            'price' => Element::make('$5.95'),
-            'description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
-            'calories' => Element::make('650'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => ReaderElement::make('Belgian Waffles'),
+            'price' => ReaderElement::make('$5.95'),
+            'description' => ReaderElement::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+            'calories' => ReaderElement::make('650'),
         ]),
-        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
-            'name' => Element::make('Berry-Berry Belgian Waffles'),
-            'price' => Element::make('$8.95'),
-            'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
-            'calories' => Element::make('900'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => ReaderElement::make('Berry-Berry Belgian Waffles'),
+            'price' => ReaderElement::make('$8.95'),
+            'description' => ReaderElement::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+            'calories' => ReaderElement::make('900'),
         ]),
     ]);
 
     $notSoldOutNotBestSeller = $reader->element('food', ['soldOut' => 'false', 'bestSeller' => 'false'])->get();
 
     expect($notSoldOutNotBestSeller)->toEqual([
-        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
-            'name' => Element::make('Strawberry Belgian Waffles'),
-            'price' => Element::make('$7.95'),
-            'description' => Element::make('Light Belgian waffles covered with strawberries and whipped cream'),
-            'calories' => Element::make('900'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
+            'name' => ReaderElement::make('Strawberry Belgian Waffles'),
+            'price' => ReaderElement::make('$7.95'),
+            'description' => ReaderElement::make('Light Belgian waffles covered with strawberries and whipped cream'),
+            'calories' => ReaderElement::make('900'),
         ]),
-        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
-            'name' => Element::make('Homestyle Breakfast'),
-            'price' => Element::make('$6.95'),
-            'description' => Element::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
-            'calories' => Element::make('950'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'false'])->setContent([
+            'name' => ReaderElement::make('Homestyle Breakfast'),
+            'price' => ReaderElement::make('$6.95'),
+            'description' => ReaderElement::make('Two eggs, bacon or sausage, toast, and our ever-popular hash browns'),
+            'calories' => ReaderElement::make('950'),
         ]),
     ]);
 });
@@ -401,11 +401,11 @@ test('can use xpath to find an element', function () {
     expect($berryBerryWaffles)->not->toBeInstanceOf(LazyQuery::class);
 
     expect($berryBerryWaffles->sole())->toEqual(
-        Element::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
-            'name' => Element::make('Berry-Berry Belgian Waffles'),
-            'price' => Element::make('$8.95'),
-            'description' => Element::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
-            'calories' => Element::make('900'),
+        ReaderElement::make()->setAttributes(['soldOut' => 'false', 'bestSeller' => 'true'])->setContent([
+            'name' => ReaderElement::make('Berry-Berry Belgian Waffles'),
+            'price' => ReaderElement::make('$8.95'),
+            'description' => ReaderElement::make('Light Belgian waffles covered with an assortment of fresh berries and whipped cream'),
+            'calories' => ReaderElement::make('900'),
         ]),
     );
 });
@@ -427,7 +427,7 @@ test('when an element has attributes and text content it will still be converted
     $reader = XmlReader::fromString('<food bestSeller="true">Berry-Berry Belgian Waffles</food>');
 
     expect($reader->elements())->toEqual([
-        'food' => Element::make('Berry-Berry Belgian Waffles')->addAttribute('bestSeller', 'true'),
+        'food' => ReaderElement::make('Berry-Berry Belgian Waffles')->addAttribute('bestSeller', 'true'),
     ]);
 });
 
@@ -465,7 +465,7 @@ XML
     $element = $reader->element('container.services.service', ['id' => 'service_container'])->sole();
 
     expect($element)->toEqual(
-        Element::make('')->setAttributes([
+        ReaderElement::make('')->setAttributes([
             'id' => 'service_container',
             'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
             'public' => 'true',
@@ -479,7 +479,7 @@ XML
     $xpathElement = $reader->xpathElement('/container/services/service[@id="service_container"]')->sole();
 
     expect($xpathElement)->toEqual(
-        Element::make('')->setAttributes([
+        ReaderElement::make('')->setAttributes([
             'id' => 'service_container',
             'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
             'public' => 'true',
@@ -496,7 +496,7 @@ XML
     )->sole();
 
     expect($mappedXpathElement)->toEqual(
-        Element::make('')->setAttributes([
+        ReaderElement::make('')->setAttributes([
             'id' => 'service_container',
             'class' => 'Symfony\Component\DependencyInjection\ContainerInterface',
             'public' => 'true',
@@ -510,8 +510,8 @@ XML
     $tags = $reader->element('tag')->get();
 
     expect($tags)->toEqual([
-        Element::make('1')->setAttributes(['name' => 'controller.service_arguments', 'xmlns' => 'http://symfony.com/schema/dic/tag-1']),
-        Element::make('2')->setAttributes(['name' => 'routing.route_loader', 'xmlns' => 'http://symfony.com/schema/dic/tag-2']),
+        ReaderElement::make('1')->setAttributes(['name' => 'controller.service_arguments', 'xmlns' => 'http://symfony.com/schema/dic/tag-1']),
+        ReaderElement::make('2')->setAttributes(['name' => 'routing.route_loader', 'xmlns' => 'http://symfony.com/schema/dic/tag-2']),
     ]);
 
     // Test we can query xpath element
@@ -521,8 +521,8 @@ XML
     $xpathTags = $reader->xpathElement('/container/services/service/tag')->get();
 
     expect($xpathTags)->toEqual([
-        Element::make('1')->setAttributes(['name' => 'controller.service_arguments']),
-        Element::make('2')->setAttributes(['name' => 'routing.route_loader']),
+        ReaderElement::make('1')->setAttributes(['name' => 'controller.service_arguments']),
+        ReaderElement::make('2')->setAttributes(['name' => 'routing.route_loader']),
     ]);
 
     // Test we can query xpath elements with mapping
@@ -537,7 +537,7 @@ XML
         '/root:container/root:services/root:service/tag-1:tag',
     )->sole();
 
-    expect($mappedXpathTag)->toEqual(Element::make('1')
+    expect($mappedXpathTag)->toEqual(ReaderElement::make('1')
         ->setAttributes(['name' => 'controller.service_arguments', 'xmlns' => 'http://symfony.com/schema/dic/tag-1']));
 
     // Works with XPath Element
