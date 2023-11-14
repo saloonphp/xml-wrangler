@@ -45,6 +45,13 @@ class XmlReader
     protected array $xpathNamespaceMap = [];
 
     /**
+     * Include XML namespaces and prefixes
+     *
+     * @var bool
+     */
+    protected bool $includeNamespaces = true;
+
+    /**
      * Constructor
      *
      * @param resource $streamFile
@@ -399,7 +406,13 @@ class XmlReader
      */
     protected function parseXml(string $xml): Element|array
     {
-        $decoded = xml_decode($xml);
+        $xmlConfigurators = [];
+
+        if ($this->includeNamespaces === false) {
+            $xmlConfigurators[] = traverse(RemoveNamespaces::all());
+        }
+
+        $decoded = xml_decode($xml, ...$xmlConfigurators);
 
         $firstKey = array_key_first($decoded);
 
@@ -456,6 +469,18 @@ class XmlReader
     public function setXpathNamespaceMap(array $xpathNamespaceMap): XmlReader
     {
         $this->xpathNamespaceMap = $xpathNamespaceMap;
+
+        return $this;
+    }
+
+    /**
+     * Remove XML namespaces
+     *
+     * @return $this
+     */
+    public function withoutNamespaces(): static
+    {
+        $this->includeNamespaces = false;
 
         return $this;
     }

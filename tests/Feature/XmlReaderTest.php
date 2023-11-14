@@ -553,3 +553,11 @@ XML
 
     expect($mappedXpathTag)->toBe('1');
 });
+
+test('can remove prefixes from xml', function () {
+    $reader = XmlReader::fromFile('tests/Fixtures/prefixed-breakfast-menu.xml');
+
+    $reader->withoutNamespaces();
+
+    dd($reader->element('food')->get());
+});

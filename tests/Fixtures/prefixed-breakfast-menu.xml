@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<bkfst:breakfast_menu name="Big G's Breakfasts" xmlns:bkfst="http://breakfast.test/example/doesnt-exist">
+  <bkfst:food soldOut="false" bestSeller="true">
+    <bkfst:name>Belgian Waffles</bkfst:name>
+    <bkfst:price>$5.95</bkfst:price>
+    <bkfst:description>Two of our famous Belgian Waffles with plenty of real maple syrup</bkfst:description>
+    <bkfst:calories>650</bkfst:calories>
+  </bkfst:food>
+  <bkfst:food soldOut="false" bestSeller="false">
+    <bkfst:name>Strawberry Belgian Waffles</bkfst:name>
+    <bkfst:price>$7.95</bkfst:price>
+    <bkfst:description>Light Belgian waffles covered with strawberries and whipped cream</bkfst:description>
+    <bkfst:calories>900</bkfst:calories>
+  </bkfst:food>
+  <bkfst:food soldOut="false" bestSeller="true">
+    <bkfst:name>Berry-Berry Belgian Waffles</bkfst:name>
+    <bkfst:price>$8.95</bkfst:price>
+    <bkfst:description>Light Belgian waffles covered with an assortment of fresh berries and whipped cream</bkfst:description>
+    <bkfst:calories>900</bkfst:calories>
+  </bkfst:food>
+  <bkfst:food soldOut="true" bestSeller="false">
+    <bkfst:name>French Toast</bkfst:name>
+    <bkfst:price>$4.50</bkfst:price>
+    <bkfst:description>Thick slices made from our homemade sourdough bread</bkfst:description>
+    <bkfst:calories>600</bkfst:calories>
+  </bkfst:food>
+  <bkfst:food soldOut="false" bestSeller="false">
+    <bkfst:name>Homestyle Breakfast</bkfst:name>
+    <bkfst:price>$6.95</bkfst:price>
+    <bkfst:description>Two eggs, bacon or sausage, toast, and our ever-popular hash browns</bkfst:description>
+    <bkfst:calories>950</bkfst:calories>
+  </bkfst:food>
+</bkfst:breakfast_menu>
