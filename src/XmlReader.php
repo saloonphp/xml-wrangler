@@ -404,7 +404,7 @@ class XmlReader implements Readable
 
         $firstKey = array_key_first($decoded);
 
-        return $this->convertArrayIntoElements($firstKey, $decoded[$firstKey]);
+        return $this->convertArrayIntoElements($firstKey, $decoded[$firstKey], $xml);
     }
 
     /**
@@ -412,9 +412,9 @@ class XmlReader implements Readable
      *
      * @return array<string, mixed>|\Saloon\XmlWrangler\Data\ReaderElement
      */
-    protected function convertArrayIntoElements(string $key, mixed $value, bool $isNested = false): array|ReaderElement
+    protected function convertArrayIntoElements(?string $key, mixed $value, string $source): array|ReaderElement
     {
-        $element = ReaderElement::fromReader($key);
+        $element = ReaderElement::fromSource($source);
 
         if (is_array($value)) {
             $element->setAttributes($value['@attributes'] ?? []);
@@ -431,7 +431,7 @@ class XmlReader implements Readable
                 $nestedValues = [];
 
                 foreach ($value as $nestedKey => $nestedValue) {
-                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(is_int($nestedKey) ? $key: $nestedKey, $nestedValue, true) : ReaderElement::fromReader($nestedKey)->setContent($nestedValue);
+                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(null, $nestedValue, $source) : ReaderElement::fromSource($source)->setContent($nestedValue);
                 }
 
                 $element->setContent($nestedValues);
@@ -440,7 +440,7 @@ class XmlReader implements Readable
             $element->setContent($value);
         }
 
-        if ($isNested === true) {
+        if (is_null($key)) {
             return $element;
         }
 

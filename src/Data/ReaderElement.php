@@ -13,9 +13,9 @@ use Saloon\XmlWrangler\XmlWriter;
 class ReaderElement extends Element implements Readable
 {
     /**
-     * The name of the element
+     * The source XML of the element
      */
-    protected string $name;
+    protected string $source;
 
     /**
      * The XML reader
@@ -34,11 +34,11 @@ class ReaderElement extends Element implements Readable
      *
      * @param array<string, mixed> $options
      */
-    public static function fromReader(string $name, array $options = []): static
+    public static function fromSource(string $source, array $options = []): static
     {
         $instance = new self;
 
-        $instance->name = $name;
+        $instance->source = $source;
         $instance->readerOptions = $options;
 
         return $instance;
@@ -46,11 +46,7 @@ class ReaderElement extends Element implements Readable
 
     public function reader(): XmlReader
     {
-        dd($this->getContent());
-
-        $xml = XmlWriter::make()->write(new RootElement($this->name, $this->getContent(), $this->getAttributes()), []);
-
-        $reader = XmlReader::fromString($xml);
+        $reader = XmlReader::fromString($this->source);
 
         // Todo: Set reader options
 
