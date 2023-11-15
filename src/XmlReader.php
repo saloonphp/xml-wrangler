@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Saloon\XmlWrangler;
 
 use Generator;
+use Saloon\XmlWrangler\Contracts\Readable;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
@@ -21,7 +22,7 @@ use Saloon\XmlWrangler\Exceptions\XmlReaderException;
 use VeeWee\Xml\Dom\Traverser\Visitor\RemoveNamespaces;
 use function VeeWee\Xml\Dom\Xpath\Configurator\namespaces;
 
-class XmlReader
+class XmlReader implements Readable
 {
     /**
      * XML Reader
@@ -413,9 +414,7 @@ class XmlReader
      */
     protected function convertArrayIntoElements(?string $key, mixed $value): array|ReaderElement
     {
-        $element = new ReaderElement;
-
-        $element->setName($key);
+        $element = ReaderElement::fromReader($key);
 
         if (is_array($value)) {
             $element->setAttributes($value['@attributes'] ?? []);
@@ -432,7 +431,7 @@ class XmlReader
                 $nestedValues = [];
 
                 foreach ($value as $nestedKey => $nestedValue) {
-                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(null, $nestedValue) : (new ReaderElement($nestedValue))->setName($nestedKey);
+                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements($key, $nestedValue) : ReaderElement::fromReader($nestedKey)->setContent($nestedValue);
                 }
 
                 $element->setContent($nestedValues);

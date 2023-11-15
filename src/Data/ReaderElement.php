@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Saloon\XmlWrangler\Data;
 
+use Saloon\XmlWrangler\Contracts\Readable;
+use Saloon\XmlWrangler\LazyQuery;
+use Saloon\XmlWrangler\Query;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\XmlWrangler\XmlWriter;
 
-/**
- * @mixin XmlReader
- */
-class ReaderElement extends Element
+class ReaderElement extends Element implements Readable
 {
     /**
      * The name of the element
@@ -18,47 +18,88 @@ class ReaderElement extends Element
     protected string $name;
 
     /**
-     * Set the name of the element
-     *
-     * @return $this
+     * The XML reader
      */
-    public function setName(string $name): static
-    {
-        $this->name = $name;
-
-        return $this;
-    }
+    protected XmlReader $reader;
 
     /**
-     * Get the name of the element
+     * XML Reader Options
+     *
+     * @var array<string, mixed>
      */
-    public function getName(): string
-    {
-        return $this->name;
-    }
+    protected array $readerOptions = [];
 
     /**
-     * Create a reader instance from the element
+     * Create an element from a reader
      *
-     * @throws \DOMException
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlWriterException
+     * @param array<string, mixed> $options
      */
+    public static function fromReader(string $name, array $options = []): static
+    {
+        $instance = new self;
+
+        $instance->name = $name;
+        $instance->readerOptions = $options;
+
+        return $instance;
+    }
+
     public function reader(): XmlReader
     {
-        $xml = XmlWriter::make()->write(new RootElement($this->getName(), $this->getContent(), $this->getAttributes()), []);
+        $xml = XmlWriter::make()->write(new RootElement($this->name, $this->getContent(), $this->getAttributes()), []);
 
-        return XmlReader::fromString($xml);
+        $reader = XmlReader::fromString($xml);
+
+        // Todo: Set reader options
+
+        return $reader;
     }
 
     /**
-     * Proxy a method call to the reader
-     *
-     * @param array<int, mixed> $arguments
-     * @throws \DOMException
-     * @throws \Saloon\XmlWrangler\Exceptions\XmlWriterException
+     * @inheritDoc
      */
-    public function __call(string $name, array $arguments): mixed
+    public function elements(): array
     {
-        return $this->reader()->$name(...$arguments);
+        return $this->reader()->elements();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function element(string $name, array $withAttributes = []): LazyQuery
+    {
+        return $this->reader()->element($name, $withAttributes);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function xpathElement(string $query): Query
+    {
+        return $this->reader()->xpathElement($query);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function values(): array
+    {
+        return $this->reader()->values();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function value(string $name, array $attributes = []): LazyQuery
+    {
+        return $this->reader()->value($name, $attributes);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function xpathValue(string $query): Query
+    {
+        return $this->reader()->xpathValue($query);
     }
 }
