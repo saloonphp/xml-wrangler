@@ -75,6 +75,9 @@ test('can parse xml and convert it into an array of elements', function () {
         ])->addAttribute('name', 'Big G\'s Breakfasts'),
     ];
 
+    dd($reader->elements()['breakfast_menu']->getContent()['food']->values());
+
+
     expect($reader->elements())->toEqual($result);
 });
 

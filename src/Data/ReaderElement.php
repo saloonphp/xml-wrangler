@@ -46,6 +46,8 @@ class ReaderElement extends Element implements Readable
 
     public function reader(): XmlReader
     {
+        dd($this->getContent());
+
         $xml = XmlWriter::make()->write(new RootElement($this->name, $this->getContent(), $this->getAttributes()), []);
 
         $reader = XmlReader::fromString($xml);

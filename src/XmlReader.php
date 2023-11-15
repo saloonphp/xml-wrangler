@@ -412,7 +412,7 @@ class XmlReader implements Readable
      *
      * @return array<string, mixed>|\Saloon\XmlWrangler\Data\ReaderElement
      */
-    protected function convertArrayIntoElements(?string $key, mixed $value): array|ReaderElement
+    protected function convertArrayIntoElements(string $key, mixed $value, bool $isNested = false): array|ReaderElement
     {
         $element = ReaderElement::fromReader($key);
 
@@ -431,7 +431,7 @@ class XmlReader implements Readable
                 $nestedValues = [];
 
                 foreach ($value as $nestedKey => $nestedValue) {
-                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements($key, $nestedValue) : ReaderElement::fromReader($nestedKey)->setContent($nestedValue);
+                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(is_int($nestedKey) ? $key: $nestedKey, $nestedValue, true) : ReaderElement::fromReader($nestedKey)->setContent($nestedValue);
                 }
 
                 $element->setContent($nestedValues);
@@ -440,7 +440,7 @@ class XmlReader implements Readable
             $element->setContent($value);
         }
 
-        if (is_null($key)) {
+        if ($isNested === true) {
             return $element;
         }
 
