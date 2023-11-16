@@ -47,7 +47,13 @@ class ReaderElement extends Element implements Readable
 
     public function reader(): XmlReader
     {
-        $xml = XmlWriter::make()->write(new RootElement($this->name, $this->content, $this->attributes), []);
+        $content = $this->content;
+
+        if (is_int(array_key_first($content))) {
+            $content = [$this->name => $content];
+        }
+
+        $xml = XmlWriter::make()->write(new RootElement($this->name, $content, $this->attributes), []);
 
         // Todo: Set reader options
 

@@ -8,12 +8,12 @@ test('the reader element can instantiate a reader instance', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
 
-    // Todo: This doens't work
-    // dd($reader->element('breakfast_menu')->sole()->getContent()['food']->elements());
+    // Todo: This now works
+    // dd($reader->element('breakfast_menu')->sole()->getContent()['food']);
 
-    $belgianWaffles = $reader->element('food.0')->sole();
+    $belgianWaffles = $reader->xpathElement('//food[3]')->sole();
 
-    dd($belgianWaffles->elements());
+    dd($belgianWaffles->values());
 //
 //    dump('Is Sold Out? ' . $belgianWaffles->getAttribute('soldOut'));
 //
