@@ -6,6 +6,7 @@ namespace Saloon\XmlWrangler;
 
 use Generator;
 use Saloon\XmlWrangler\Contracts\Readable;
+use Saloon\XmlWrangler\Data\Element;
 use Throwable;
 use DOMElement;
 use Saloon\Http\Response;
@@ -404,7 +405,7 @@ class XmlReader implements Readable
 
         $firstKey = array_key_first($decoded);
 
-        return $this->convertArrayIntoElements($firstKey, $decoded[$firstKey], $xml);
+        return $this->convertArrayIntoElements($firstKey, $decoded[$firstKey]);
     }
 
     /**
@@ -412,9 +413,9 @@ class XmlReader implements Readable
      *
      * @return array<string, mixed>|\Saloon\XmlWrangler\Data\ReaderElement
      */
-    protected function convertArrayIntoElements(?string $key, mixed $value, string $source): array|ReaderElement
+    protected function convertArrayIntoElements(string $key, mixed $value, bool $isNested = false): array|ReaderElement
     {
-        $element = ReaderElement::fromSource($source);
+        $element = ReaderElement::fromReader($key);
 
         if (is_array($value)) {
             $element->setAttributes($value['@attributes'] ?? []);
@@ -431,7 +432,9 @@ class XmlReader implements Readable
                 $nestedValues = [];
 
                 foreach ($value as $nestedKey => $nestedValue) {
-                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements(null, $nestedValue, $source) : ReaderElement::fromSource($source)->setContent($nestedValue);
+                    $nestedElementKey = is_string($nestedKey) ? $nestedKey : $key;
+
+                    $nestedValues[$nestedKey] = is_array($nestedValue) ? $this->convertArrayIntoElements($nestedElementKey, $nestedValue, true) : ReaderElement::fromReader($nestedKey)->setContent($nestedValue);
                 }
 
                 $element->setContent($nestedValues);
@@ -440,7 +443,7 @@ class XmlReader implements Readable
             $element->setContent($value);
         }
 
-        if (is_null($key)) {
+        if ($isNested === true) {
             return $element;
         }
 

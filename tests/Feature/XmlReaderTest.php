@@ -77,7 +77,6 @@ test('can parse xml and convert it into an array of elements', function () {
 
     dd($reader->elements()['breakfast_menu']->getContent()['food']->values());
 
-
     expect($reader->elements())->toEqual($result);
 });
 

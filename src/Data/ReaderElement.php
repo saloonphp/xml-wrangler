@@ -9,13 +9,14 @@ use Saloon\XmlWrangler\LazyQuery;
 use Saloon\XmlWrangler\Query;
 use Saloon\XmlWrangler\XmlReader;
 use Saloon\XmlWrangler\XmlWriter;
+use function Psl\Type\instance_of;
 
 class ReaderElement extends Element implements Readable
 {
     /**
-     * The source XML of the element
+     * The name of the element
      */
-    protected string $source;
+    protected string $name;
 
     /**
      * The XML reader
@@ -34,11 +35,11 @@ class ReaderElement extends Element implements Readable
      *
      * @param array<string, mixed> $options
      */
-    public static function fromSource(string $source, array $options = []): static
+    public static function fromReader(string $name, array $options = []): static
     {
         $instance = new self;
 
-        $instance->source = $source;
+        $instance->name = $name;
         $instance->readerOptions = $options;
 
         return $instance;
@@ -46,11 +47,11 @@ class ReaderElement extends Element implements Readable
 
     public function reader(): XmlReader
     {
-        $reader = XmlReader::fromString($this->source);
+        $xml = XmlWriter::make()->write(new RootElement($this->name, $this->content, $this->attributes), []);
 
         // Todo: Set reader options
 
-        return $reader;
+        return XmlReader::fromString($xml);
     }
 
     /**
@@ -58,7 +59,7 @@ class ReaderElement extends Element implements Readable
      */
     public function elements(): array
     {
-        return $this->reader()->elements();
+        return $this->reader()->elements()[$this->name]->getContent();
     }
 
     /**
@@ -82,7 +83,7 @@ class ReaderElement extends Element implements Readable
      */
     public function values(): array
     {
-        return $this->reader()->values();
+        return $this->reader()->values()[$this->name];
     }
 
     /**

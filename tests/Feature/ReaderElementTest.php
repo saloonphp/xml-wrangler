@@ -7,7 +7,17 @@ use Saloon\XmlWrangler\XmlReader;
 test('the reader element can instantiate a reader instance', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/breakfast-menu.xml');
 
-    dd($reader->element('name'));
+
+    // Todo: This doens't work
+    // dd($reader->element('breakfast_menu')->sole()->getContent()['food']->elements());
+
+    $belgianWaffles = $reader->element('food.0')->sole();
+
+    dd($belgianWaffles->elements());
+//
+//    dump('Is Sold Out? ' . $belgianWaffles->getAttribute('soldOut'));
+//
+//    dd($belgianWaffles->values());
 
     // Todo: Current issues:
     // - Methods on the reader have ended up in the methods of the ReaderElement
