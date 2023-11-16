@@ -11,6 +11,10 @@ test('the reader element can instantiate a reader instance', function () {
     // Todo: This now works
     // dd($reader->element('breakfast_menu')->sole()->getContent()['food']);
 
+    $food = $reader->element('food')->get();
+
+    dd($food[0]->getAttributes(), $food[0]->values());
+
     $belgianWaffles = $reader->xpathElement('//food[3]')->sole();
 
     dd($belgianWaffles->values());

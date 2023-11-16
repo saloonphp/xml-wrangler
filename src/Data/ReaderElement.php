@@ -49,6 +49,9 @@ class ReaderElement extends Element implements Readable
     {
         $content = $this->content;
 
+        // Occasionally, the content of the element is an array of other elements. When this
+        // happens we need to wrap the content in another element with the same name.
+
         if (is_int(array_key_first($content))) {
             $content = [$this->name => $content];
         }
