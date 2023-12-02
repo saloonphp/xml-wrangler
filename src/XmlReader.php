@@ -131,10 +131,22 @@ class XmlReader
             throw new XmlReaderException('Unable to create the temporary file.');
         }
 
+        // Rewind before reading
+
+        if ($stream->isSeekable()) {
+            $stream->rewind();
+        }
+
         while (! $stream->eof()) {
             if ($bytes = $stream->read(1024)) {
                 fwrite($temporaryFile, $bytes);
             }
+        }
+
+        // Rewind after reading
+
+        if ($stream->isSeekable()) {
+            $stream->rewind();
         }
 
         rewind($temporaryFile);
