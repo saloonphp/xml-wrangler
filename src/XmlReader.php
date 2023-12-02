@@ -131,9 +131,11 @@ class XmlReader
             throw new XmlReaderException('Unable to create the temporary file.');
         }
 
+        $isStreamSeekable = $stream->isSeekable();
+
         // Rewind before reading
 
-        if ($stream->isSeekable()) {
+        if ($isStreamSeekable === true) {
             $stream->rewind();
         }
 
@@ -145,7 +147,7 @@ class XmlReader
 
         // Rewind after reading
 
-        if ($stream->isSeekable()) {
+        if ($isStreamSeekable === true) {
             $stream->rewind();
         }
 
