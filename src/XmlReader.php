@@ -500,7 +500,7 @@ class XmlReader
      *
      * @return $this
      */
-    public function withoutNamespaces(): static
+    public function removeNamespaces(): static
     {
         $this->includeNamespaces = false;
 

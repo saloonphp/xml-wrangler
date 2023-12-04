@@ -554,7 +554,7 @@ XML
     expect($mappedXpathTag)->toBe('1');
 });
 
-test('can remove prefixes from xml', function () {
+test('can remove namespaces and prefixes from xml', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/prefixed-breakfast-menu.xml');
 
     expect($reader->element('food.0')->first())->toBeNull();
@@ -574,9 +574,9 @@ test('can remove prefixes from xml', function () {
             ])
     );
 
-    // Now we'll remove the namespace
+    // Now we'll remove the namespaces
 
-    $reader->withoutNamespaces();
+    $reader->removeNamespaces();
 
     expect($reader->element('bkfst:food.0')->first())->toBeNull();
 
