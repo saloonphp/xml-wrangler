@@ -557,7 +557,62 @@ XML
 test('can remove prefixes from xml', function () {
     $reader = XmlReader::fromFile('tests/Fixtures/prefixed-breakfast-menu.xml');
 
+    expect($reader->element('food.0')->first())->toBeNull();
+
+    expect($reader->element('bkfst:food.0')->first())->toEqual(
+        Element::make()
+            ->setAttributes([
+                'soldOut' => 'false',
+                'bestSeller' => 'true',
+                'xmlns:bkfst' => 'http://breakfast.test/example/doesnt-exist',
+            ])
+            ->setContent([
+                'bkfst:name' => Element::make('Belgian Waffles'),
+                'bkfst:price' => Element::make('$5.95'),
+                'bkfst:description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+                'bkfst:calories' => Element::make('650'),
+            ])
+    );
+
+    // Now we'll remove the namespace
+
     $reader->withoutNamespaces();
 
-    dd($reader->element('food')->get());
+    expect($reader->element('bkfst:food.0')->first())->toBeNull();
+
+    expect($reader->element('food.0')->first())->toEqual(
+        Element::make()
+            ->setAttributes([
+                'soldOut' => 'false',
+                'bestSeller' => 'true',
+            ])
+            ->setContent([
+                'name' => Element::make('Belgian Waffles'),
+                'price' => Element::make('$5.95'),
+                'description' => Element::make('Two of our famous Belgian Waffles with plenty of real maple syrup'),
+                'calories' => Element::make('650'),
+            ])
+    );
+
+    // We'll also make sure XPath works okay
+
+    expect($reader->xpathValue('//food[1]/name')->sole())->toEqual('Belgian Waffles');
+    expect($reader->xpathElement('//food[1]/name')->sole())->toEqual(Element::make('Belgian Waffles'));
+
+    // Test converting all values
+
+    $unprefixedNodes = 0;
+    $values = $reader->values();
+
+    expect($values)->toHaveKey('breakfast_menu');
+    expect($values['breakfast_menu'])->toHaveKey('food');
+    expect($values['breakfast_menu']['food'])->toHaveCount(5);
+
+    array_walk_recursive($values['breakfast_menu']['food'], function (mixed $value, string $key) use (&$unprefixedNodes) {
+        if (str_contains($key, ':') === false) {
+            $unprefixedNodes++;
+        }
+    });
+
+    expect($unprefixedNodes)->toBe(20);
 });

@@ -46,8 +46,6 @@ class XmlReader
 
     /**
      * Include XML namespaces and prefixes
-     *
-     * @var bool
      */
     protected bool $includeNamespaces = true;
 
@@ -224,8 +222,16 @@ class XmlReader
             $matchers = [];
 
             foreach ($searchTerms as $index => $searchTerm) {
+                // When the search term is not numeric we must perform an element name
+                // search which will limit the results by a given element name. If
+                // namespaces were removed we must use element_local_name as this
+                // matches on elements no matter the prefix.
+
                 if (! is_numeric($searchTerm)) {
-                    $matchers[$index] = Matcher\element_name($searchTerm);
+                    $matchers[$index] = $this->includeNamespaces === true
+                        ? Matcher\element_name($searchTerm)
+                        : Matcher\element_local_name($searchTerm);
+
                     continue;
                 }
 
@@ -315,7 +321,9 @@ class XmlReader
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xml = Document::fromXmlString($xml, traverse(RemoveNamespaces::unprefixed()))->toXmlString();
+                $namespaceFilter = $this->includeNamespaces ? RemoveNamespaces::unprefixed() : RemoveNamespaces::all();
+
+                $xml = Document::fromXmlString($xml, traverse($namespaceFilter))->toXmlString();
             } else {
                 $xpathConfigurators[] = namespaces($namespaceMap);
             }
@@ -351,8 +359,8 @@ class XmlReader
     /**
      * Convert the XML into an array
      *
-     * @throws \Throwable
      * @return array<string, mixed>
+     * @throws \Throwable
      */
     public function values(): array
     {
