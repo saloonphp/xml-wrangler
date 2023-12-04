@@ -616,3 +616,14 @@ test('can remove namespaces and prefixes from xml', function () {
 
     expect($unprefixedNodes)->toBe(20);
 });
+
+test('cannot use an xpath namespace map without namespaces', function () {
+    $reader = XmlReader::fromFile('tests/Fixtures/prefixed-breakfast-menu.xml');
+
+    $reader->removeNamespaces();
+    $reader->setXpathNamespaceMap([
+        'bkfast' => 'http://breakfast.test/example/doesnt-exist',
+    ]);
+
+    $reader->xpathValue('//food[1]/name')->sole();
+})->throws(XmlReaderException::class, 'XPath namespace map cannot be used when namespaces are removed.');

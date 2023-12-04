@@ -45,9 +45,9 @@ class XmlReader
     protected array $xpathNamespaceMap = [];
 
     /**
-     * Include XML namespaces and prefixes
+     * Should XML Wrangler keep namespaces?
      */
-    protected bool $includeNamespaces = true;
+    protected bool $keepNamespaces = true;
 
     /**
      * Constructor
@@ -228,7 +228,7 @@ class XmlReader
                 // matches on elements no matter the prefix.
 
                 if (! is_numeric($searchTerm)) {
-                    $matchers[$index] = $this->includeNamespaces === true
+                    $matchers[$index] = $this->keepNamespaces === true
                         ? Matcher\element_name($searchTerm)
                         : Matcher\element_local_name($searchTerm);
 
@@ -315,13 +315,18 @@ class XmlReader
             $xml = $this->reader->provide(Matcher\document_element())->current();
 
             $xpathConfigurators = [];
+            $keepNamespaces = $this->keepNamespaces;
             $namespaceMap = $this->xpathNamespaceMap;
+
+            if ($keepNamespaces === false && ! empty($namespaceMap)) {
+                throw new XmlReaderException('XPath namespace map cannot be used when namespaces are removed.');
+            }
 
             // When the namespace map is empty we will remove the root namespaces
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $namespaceFilter = $this->includeNamespaces ? RemoveNamespaces::unprefixed() : RemoveNamespaces::all();
+                $namespaceFilter = $keepNamespaces ? RemoveNamespaces::unprefixed() : RemoveNamespaces::all();
 
                 $xml = Document::fromXmlString($xml, traverse($namespaceFilter))->toXmlString();
             } else {
@@ -430,7 +435,7 @@ class XmlReader
     {
         $xmlConfigurators = [];
 
-        if ($this->includeNamespaces === false) {
+        if ($this->keepNamespaces === false) {
             $xmlConfigurators[] = traverse(RemoveNamespaces::all());
         }
 
@@ -502,7 +507,7 @@ class XmlReader
      */
     public function removeNamespaces(): static
     {
-        $this->includeNamespaces = false;
+        $this->keepNamespaces = false;
 
         return $this;
     }
