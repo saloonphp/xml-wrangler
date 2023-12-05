@@ -45,6 +45,11 @@ class XmlReader
     protected array $xpathNamespaceMap = [];
 
     /**
+     * Should XML Wrangler keep namespaces?
+     */
+    protected bool $keepNamespaces = true;
+
+    /**
      * Constructor
      *
      * @param resource $streamFile
@@ -217,8 +222,16 @@ class XmlReader
             $matchers = [];
 
             foreach ($searchTerms as $index => $searchTerm) {
+                // When the search term is not numeric we must perform an element name
+                // search which will limit the results by a given element name. If
+                // namespaces were removed we must use element_local_name as this
+                // matches on elements no matter the prefix.
+
                 if (! is_numeric($searchTerm)) {
-                    $matchers[$index] = Matcher\element_name($searchTerm);
+                    $matchers[$index] = $this->keepNamespaces === true
+                        ? Matcher\element_name($searchTerm)
+                        : Matcher\element_local_name($searchTerm);
+
                     continue;
                 }
 
@@ -302,13 +315,20 @@ class XmlReader
             $xml = $this->reader->provide(Matcher\document_element())->current();
 
             $xpathConfigurators = [];
+            $keepNamespaces = $this->keepNamespaces;
             $namespaceMap = $this->xpathNamespaceMap;
+
+            if ($keepNamespaces === false && ! empty($namespaceMap)) {
+                throw new XmlReaderException('XPath namespace map cannot be used when namespaces are removed.');
+            }
 
             // When the namespace map is empty we will remove the root namespaces
             // because if they are not mapped then you cannot search on them.
 
             if (empty($namespaceMap)) {
-                $xml = Document::fromXmlString($xml, traverse(RemoveNamespaces::unprefixed()))->toXmlString();
+                $namespaceFilter = $keepNamespaces ? RemoveNamespaces::unprefixed() : RemoveNamespaces::all();
+
+                $xml = Document::fromXmlString($xml, traverse($namespaceFilter))->toXmlString();
             } else {
                 $xpathConfigurators[] = namespaces($namespaceMap);
             }
@@ -344,8 +364,8 @@ class XmlReader
     /**
      * Convert the XML into an array
      *
-     * @throws \Throwable
      * @return array<string, mixed>
+     * @throws \Throwable
      */
     public function values(): array
     {
@@ -413,7 +433,13 @@ class XmlReader
      */
     protected function parseXml(string $xml): Element|array
     {
-        $decoded = xml_decode($xml);
+        $xmlConfigurators = [];
+
+        if ($this->keepNamespaces === false) {
+            $xmlConfigurators[] = traverse(RemoveNamespaces::all());
+        }
+
+        $decoded = xml_decode($xml, ...$xmlConfigurators);
 
         $firstKey = array_key_first($decoded);
 
@@ -470,6 +496,18 @@ class XmlReader
     public function setXpathNamespaceMap(array $xpathNamespaceMap): XmlReader
     {
         $this->xpathNamespaceMap = $xpathNamespaceMap;
+
+        return $this;
+    }
+
+    /**
+     * Remove XML namespaces
+     *
+     * @return $this
+     */
+    public function removeNamespaces(): static
+    {
+        $this->keepNamespaces = false;
 
         return $this;
     }
