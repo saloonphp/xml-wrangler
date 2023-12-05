@@ -210,6 +210,14 @@ $reader->element('song')->get(); // [Element('Luke Combs - When It Rains It Pour
 
 $reader->element('song.2')->sole(); // Element('London Symfony Orchestra - Starfield Suite')
 ```
+#### Removing Namespaces From XML
+Sometimes it's easier to traverse an XML document when you don't have to worry about namespaces and prefixes to elements. If you would like to remove them you can use the `removeNamespaces()` method on the reader.
+```php
+$reader = XmlReader::fromString(...);
+
+$reader->removeNamespaces();
+```
+
 #### Lazily Iterating
 When searching a large file, you can use the `lazy` or `collectLazy` methods which will return a generator of results only keeping one item in memory at a time.
 ```php
