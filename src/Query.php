@@ -68,7 +68,7 @@ class Query
     /**
      * Retrieve the first value in the node
      *
-     * @return TReturnType
+     * @return ?TReturnType
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
      */
     public function first(): mixed
@@ -99,7 +99,7 @@ class Query
      *
      * Throws an exception if none exist or more than one exists.
      *
-     * @return ?TReturnType
+     * @return TReturnType
      * @throws \Saloon\XmlWrangler\Exceptions\MissingNodeException
      * @throws \Saloon\XmlWrangler\Exceptions\MultipleNodesFoundException
      * @throws \Saloon\XmlWrangler\Exceptions\QueryAlreadyReadException
