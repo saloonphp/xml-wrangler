@@ -38,7 +38,7 @@ class XmlWriter
     /**
      * Constructor
      */
-    public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', bool $xmlStandalone = null)
+    public function __construct(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', ?bool $xmlStandalone = null)
     {
         $this->xmlEncoding = $xmlEncoding;
         $this->xmlVersion = $xmlVersion;
@@ -51,7 +51,7 @@ class XmlWriter
     /**
      * Create an XML writer instance
      */
-    public static function make(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', bool $xmlStandalone = null): static
+    public static function make(string $xmlEncoding = 'utf-8', string $xmlVersion = '1.0', ?bool $xmlStandalone = null): static
     {
         return new static($xmlEncoding, $xmlVersion, $xmlStandalone);
     }

@@ -16,7 +16,7 @@ class CDATA
      *
      * Base XML Element DTO
      */
-    public function __construct(string $content = null)
+    public function __construct(?string $content = null)
     {
         $this->setContent($content);
     }
@@ -24,7 +24,7 @@ class CDATA
     /**
      * Create an element instance
      */
-    public static function make(string $content = null): static
+    public static function make(?string $content = null): static
     {
         return new static($content);
     }
