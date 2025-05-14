@@ -137,6 +137,38 @@ XML
     );
 });
 
+test('delete me', function () {
+    $writer = new XmlWriter;
+
+    $xml = $writer->write('root', [
+        'a' => [
+            'b' => [
+                'c' => [
+                    new Element(['Code' => '1'], ['xsi:Type' => 'a']),
+                    new Element(['Code' => '2'], ['xsi:Type' => 'b']),
+                    new Element(['Code' => '3'], ['xsi:Type' => 'c']),
+                ],
+            ],
+        ],
+    ]);
+
+    dd($xml);
+
+    expect($xml)->toBe(
+        <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <a>
+    <b>1</b>
+    <b>2</b>
+    <b foo="bar">3</b>
+  </a>
+</root>
+
+XML
+    );
+});
+
 test('you cannot use numeric keys in the root element', function (array $content) {
     $writer = new XmlWriter;
 
@@ -145,9 +177,9 @@ test('you cannot use numeric keys in the root element', function (array $content
 
     $writer->write('root', $content);
 })->with([
-    fn () => [1, 2, 3],
-    fn () => ['a'],
-    fn () => ['a' => 'b', 2],
+    fn() => [1, 2, 3],
+    fn() => ['a'],
+    fn() => ['a' => 'b', 2],
 ]);
 
 test('you can use an array of values for multiple elements', function () {
