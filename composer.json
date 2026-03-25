@@ -23,7 +23,7 @@
         "phpstan/phpstan": "^1.9",
         "psr/http-message": "^2.0",
         "guzzlehttp/guzzle": "^7.8",
-        "saloonphp/saloon": "^3.0",
+        "saloonphp/saloon": "^4.0",
         "illuminate/collections": "^10.30",
         "symfony/var-dumper": "^7.3"
     },
