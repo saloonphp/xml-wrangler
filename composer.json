@@ -13,7 +13,7 @@
     "homepage": "https://github.com/saloonphp/xml-wrangler",
     "require": {
         "php": "^8.2",
-        "veewee/xml": "^3.1.0",
+        "veewee/xml": "^3.3.0",
         "spatie/array-to-xml": "^3.2",
         "ext-dom": "*"
     },
